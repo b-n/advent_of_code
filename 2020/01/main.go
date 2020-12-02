@@ -3,7 +3,6 @@ package main
 import (
   "log"
   "io/ioutil"
-  "net/http"
   "strings"
   "strconv"
   "sort"
