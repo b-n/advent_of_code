@@ -88,7 +88,7 @@ func main() {
   {
     hclReg := regexp.MustCompile("#[a-f0-9]{6}")
     eyeColReg := regexp.MustCompile("amb|blu|brn|gry|grn|hzl|oth")
-    pidReg := regexp.MustCompile("[0-9]{9}")
+    pidReg := regexp.MustCompile("^[0-9]{9}$")
 
     validPassports := 0
     for _, p := range passports {
