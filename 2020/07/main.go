@@ -71,7 +71,7 @@ func getTotalCapacity(rule Rule, dict map[string]Rule) int {
 }
 
 func main() {
-  input := readFile("./test2.txt")
+  input := readFile("./input.txt")
 
   rawRules := strings.Split(input, "\n")
 
@@ -96,6 +96,8 @@ func main() {
   // Challenge 2
   {
     totalCapacity := getTotalCapacity(rules["shiny gold"], rules)
-    log.Print(totalCapacity)
+    // - 1, because the totalCapacity assumes you're counting the value of the bag too
+    // so lets remove that
+    log.Print(totalCapacity - 1)
   }
 }
