@@ -28,51 +28,41 @@ func arrayAtoi(input []string) []int {
   return res
 }
 
-func hasKey(input map[int]int, key int) bool {
-  _, ok := input[key]
-  return ok
-}
+func walk(input map[int][]int, given int, cache map[int]int) int {
+  if _, ok := cache[given]; ok { return cache[given] }
 
-func checkValue(input map[int]int, given int, collected []bool) int {
-  options := options(input, given)
-
-  if (len(options) == 0) { return 1 }
-
-  extraOptions := len(options)
-  log.Print(given, options)
-  for _, option := range options {
-    if (collected[option]) { continue }
-    log.Print(given, option)
-    extraOptions *= checkValue(input, option, collected)
-    collected[option] = true
+  total := 0
+  for _, option := range input[given] {
+    total += walk(input, option, cache)
   }
-  log.Print("eo", given, extraOptions)
+  // if we have no total, we're probably with no optins, e.g. end of the line
+  if total == 0 { total = 1 }
+  cache[given] = total
 
-
-  return extraOptions
-}
-
-func options(input map[int]int, given int) []int {
-  res := []int{}
-  for j := 1; j < 4; j++ {
-    searchKey := given - j
-    if hasKey(input, searchKey) {
-      res = append(res, searchKey)
-    }
-  }
-
-  return res
+  return total
 }
 
 func main() {
-  input := readFile("./test.txt")
+  input := readFile("./input.txt")
 
   rawNumbers := strings.Split(strings.TrimRight(input, "\n"), "\n")
 
   stack := arrayAtoi(rawNumbers)
 
-  adapters := make(map[int]int, len(stack))
-  for _, v := range stack { adapters[v] = 0 }
+  adapters := map[int][]int{}
+
+  for _, v := range stack { adapters[v] = []int{} }
+  adapters[0] = []int{}
+
+  //make a map of adapter to it's possible options
+  for v, _ := range adapters {
+    for j := 1; j < 4; j++ {
+      searchKey := v + j
+      if _, ok := adapters[searchKey]; ok {
+        adapters[v] = append(adapters[v], searchKey) 
+      }
+    }
+  }
 
   // Challenge 1
   {
@@ -83,36 +73,22 @@ func main() {
       3: 1,
     }
 
-    device := 0
-    for device >= 0 {
-      adapter := 0
-      for j := 1; j < 4; j++ {
-        searchAdapter := device + j
-        if hasKey(adapters, searchAdapter) {
-          adapter = searchAdapter;
-          break
-        }
-      }
-      if adapter == 0 { break }
+    next := 0
+    for true {
+      if len(adapters[next]) == 0 { break }
 
-      difference := adapter - device
+      adapter := adapters[next][0]
+      difference := adapter - next
       differences[difference]++
-      device = adapter
+      next = adapter
     }
     log.Print(differences[1] * differences[3])
   }
 
   // Challenge 2
   {
-    maxAdapter := 22
-
-    collected := make([]bool, maxAdapter)
-    totalOptions := checkValue(adapters, maxAdapter, collected)
-    log.Print(totalOptions)
-    // starting at the max value, how many adapters could get here?
-    // 
-
-    //totalOptions := checkValue(adapters, 0, 19)
-    //log.Print(totalOptions)
+    cache := map[int]int{}
+    paths := walk(adapters, 0, cache)
+    log.Print(paths)
   }
 }
