@@ -18,25 +18,50 @@ func readFile(path string) (string) {
   return string(dat)
 }
 
-func isOccupied(board [][]rune, x int, y int) bool {
+func inBounds(board [][]rune, x int, y int) bool {
   if y < 0 || y > len(board) - 1 { return false }
   if x < 0 || x > len(board[0]) - 1 { return false }
-  return board[y][x] == '#'
+  return true
 }
 
+type countFunc = func(board [][]rune, x int, y int) int
+
 func countOccupiedAdjacent(board [][]rune, x int, y int) int {
-  occupiedAdjacent := 0
+  occupied := 0
   for i := 0; i < 9; i++ {
     if (i == 4) { continue }
     posX, posY := x + ((i % 3) - 1), y + ((i / 3) - 1)
-    if isOccupied(board, posX, posY) {
-      occupiedAdjacent++
+    if inBounds(board, posX, posY) && board[posY][posX] == '#' {
+      occupied++
     }
   }
-  return occupiedAdjacent
+  return occupied
 }
 
-func stepBoard(board [][]rune, birth int, die int) [][]rune {
+func countOccupiedAngles(board [][]rune, x int, y int) int {
+  occupied := 0
+  for i := 0; i < 9; i++ {
+    if (i == 4) { continue }
+    dirX, dirY := ((i % 3) - 1), ((i / 3) - 1)
+    posX, posY := x, y
+    found := false
+    for true {
+      posX += dirX
+      posY += dirY
+      if !inBounds(board, posX, posY) { break }
+      if board[posY][posX] == 'L' { break }
+      if board[posY][posX] == '#' {
+        found = true
+        break
+      }
+    }
+    if found { occupied++ }
+  }
+
+  return occupied
+}
+
+func stepBoard(board [][]rune, birth int, die int, countFunction countFunc) [][]rune {
   rowLength := len(board[0])
   output := make([][]rune, len(board))
   for y, row := range board {
@@ -47,7 +72,7 @@ func stepBoard(board [][]rune, birth int, die int) [][]rune {
         continue
       }
 
-      occupiedAdjacent := countOccupiedAdjacent(board, x, y)
+      occupiedAdjacent := countFunction(board, x, y)
       if (v == 'L' && occupiedAdjacent == birth) {
         output[y][x] = '#'
         continue
@@ -92,7 +117,7 @@ func main() {
     lastOccupied := 0
     printBoard(board)
     for true {
-      copy(board, stepBoard(board, 0, 4))
+      copy(board, stepBoard(board, 0, 4, countOccupiedAdjacent))
       printBoard(board)
       occupied := calculateBoard(board)
       log.Print(occupied)
@@ -103,6 +128,15 @@ func main() {
 
   //Challenge 2
   {
-
+    lastOccupied := 0
+    printBoard(board)
+    for true {
+      copy(board, stepBoard(board, 0, 5, countOccupiedAngles))
+      printBoard(board)
+      occupied := calculateBoard(board)
+      log.Print(occupied)
+      if (lastOccupied == occupied) { break }
+      lastOccupied = occupied
+    }
   }
 }
