@@ -27,7 +27,7 @@ func safeAtoi(input string) int {
 }
 
 func next(time int, bus int) int {
-  return time + (bus - time % bus)
+  return bus - time % bus
 }
 
 func main() {
@@ -39,7 +39,6 @@ func main() {
   {
     time := safeAtoi(data[0])
     rawBuses := strings.Split(data[1], ",")
-    //buses := make([]int, len(rawBuses))
     nextBus := -1
     for _, b := range rawBuses {
       bus := safeAtoi(b)
@@ -50,10 +49,61 @@ func main() {
       }
     }
 
-    log.Print((next(time, nextBus) - time) * nextBus)
+    log.Print((next(time, nextBus)) * nextBus)
   }
 
-  //Challenge 2
+  //Challenge 2 - attemp 3/4
+  if false {
+    rawBuses := strings.Split(data[1], ",")
+    buses := make([]int, len(rawBuses))
+    busIndex := map[int]int{}
+    for i, b := range rawBuses {
+      buses[i] = safeAtoi(b)
+      if buses[i] > 0 && i > 0 { busIndex[buses[i]] = i }
+    }
+
+    timeStamp := 0
+    firstBus := buses[0]
+    // This is bruteforce, and will pin your CPU for a long time
+    // At least it gives you an output every x cycles so you know it's running
+    for true {
+      i := 0
+      for bus, index := range busIndex {
+        comes := next(timeStamp + index, bus)
+        if bus != comes { break }
+        i++
+      }
+      if (i == len(busIndex)) { break }
+      if (timeStamp % (firstBus * 10000000) == 0) { log.Print(timeStamp) }
+      timeStamp += firstBus
+    }
+    log.Print(timeStamp)
+  }
+
+
+  // Challenge 2 - attempt last final v2.0 [1] .docx
   {
+    // Idea/implementation from 
+    // https://www.reddit.com/r/adventofcode/comments/kc4njx/2020_day_13_solutions/gfo4b1z?utm_source=share&utm_medium=web2x&context=3
+    // Understanding: (assume buses 67, 7, 59, 61)
+    // - We are checking for busses that work well together, not searching the timespace
+    // - We *= the jump each time, because there will be no busses in that range that are common factors
+    // - We search until we hit a % 0, because we're looking for the lowest common value
+    rawBuses := strings.Split(data[1], ",")
+    jump := 1
+    busIndex := map[int]int{}
+    for i, b := range rawBuses {
+      bus := safeAtoi(b)
+      if bus > 0 { busIndex[bus] = i }
+    }
+
+    timeStamp := 0
+    for bus, index := range busIndex {
+      for (timeStamp + index) % bus != 0 {
+        timeStamp += jump
+      }
+      jump *= bus
+    }
+    log.Print(timeStamp)
   }
 }
