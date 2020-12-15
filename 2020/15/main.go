@@ -4,34 +4,43 @@ import (
 	"log"
 )
 
+func solve(input []int, until int) int {
+  foundMap := map[int][]int{}
+  for i, v := range input {
+    foundMap[v] = []int{i + 1, -1}
+  }
+
+  for len(input) < until {
+    last := input[len(input) - 1]
+
+    next := 0
+    // if we have 2 last positions, use those
+    if (foundMap[last][0] > -1 && foundMap[last][1] > -1) {
+      next = foundMap[last][0] - foundMap[last][1]
+    }
+
+    // if we're not tracking this number yet, track it
+    if _, ok := foundMap[next]; !ok { foundMap[next] = []int{-1, -1} }
+    
+    // shuffle the last found positions
+    foundMap[next][1] = foundMap[next][0]
+    foundMap[next][0] = len(input) + 1
+
+    input = append(input, next)
+  }
+  return input[len(input)-1]
+}
+
 func main() {
   //Challenge 1
   {
     input := []int{8,13,1,0,18,9}
-
-    for len(input) < 2020 {
-      last := input[len(input) - 1]
-
-      lastTurn := -1
-      lastLastTurn := -1
-      // searching from right, find the last 2 times it was used
-      for i := len(input) - 1; i >= 0; i-- {
-        if lastTurn >= 0 && input[i] == last { lastLastTurn = i + 1; break }
-        if lastTurn == -1 && input[i] == last { lastTurn = i + 1; }
-      }
-
-      next := 0
-      // if we found both last times, next = the difference in those turns
-      if lastLastTurn >= 0 {
-        next = lastTurn - lastLastTurn
-      }
-
-      input = append(input, next)
-    }
-    log.Print(input[len(input)-1])
+    log.Print(solve(input, 2020))
   }
 
   //Challenge 2
   {
+    input := []int{8,13,1,0,18,9}
+    log.Print(solve(input, 30000000))
   }
 }
