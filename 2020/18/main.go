@@ -55,7 +55,7 @@ func solveReverse(input string) int {
     sub := subEqs[0]
     vals := strings.Fields(sub)
     res := fmt.Sprintf("%d", safeAtoi(vals[0]) + safeAtoi(vals[2]))
-    eq = strings.ReplaceAll(eq, sub, res)
+    eq = strings.Replace(eq, sub, res, 1)
     matched = plusRegex.MatchString(eq)
   }
 
@@ -67,7 +67,7 @@ func solveReverse(input string) int {
 }
 
 func main() {
-  input := readFile("./test2.txt")
+  input := readFile("./input.txt")
 
   rawEquations := strings.Split(strings.TrimRight(input, "\n"), "\n")
 
@@ -99,7 +99,6 @@ func main() {
     total := 0
 
     for _, eq := range rawEquations {
-      log.Print(eq)
       matched := parenRegex.MatchString(eq)
       for matched {
         subEqs := parenRegex.FindAllString(eq, -1)
@@ -107,12 +106,10 @@ func main() {
           res := fmt.Sprintf("%d", solveReverse(sub[1:len(sub)-1]))
           eq = strings.ReplaceAll(eq, sub, res)
         }
-        log.Print(eq)
         matched = parenRegex.MatchString(eq)
       }
 
       val := solveReverse(eq)
-      log.Print(val)
       total += val
     }
     log.Print(total)
