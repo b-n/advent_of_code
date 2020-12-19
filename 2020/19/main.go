@@ -95,17 +95,27 @@ func rule_options(ruleNumber int, rules map[int]*Rule) []string {
       }
       rule_outputs = append(rule_outputs, rule_options(sub, rules))
     }
+
     if infinite {
       for i, o := range rule_outputs {
-        for j, v := range o {
-          rule_outputs[i][j] = "(" + v + ")+"
+        opts := "(" + strings.Join(o, "|")  + ")"
+        rule_outputs[i] = []string{opts}
+      }
+
+      for i := 0; i <  10; i++ {
+        count := strconv.Itoa(i + 1)
+        opts := []string{}
+        for _, o := range rule_outputs {
+          opts = append(opts, o[0] + "{" + count + "}")
         }
+        compiled_options = append(compiled_options, "(" + strings.Join(opts, "") + ")")
+      }
+    } else {
+      for _, o := range combineArrays(rule_outputs) {
+        compiled_options = append(compiled_options, o)
       }
     }
 
-    for _, o := range combineArrays(rule_outputs) {
-      compiled_options = append(compiled_options, o)
-    }
   }
   return compiled_options
 }
@@ -140,21 +150,16 @@ func main() {
     rules[11].raw[0] = []int{42,11,31}
 
     valid_options := rule_options(0, rules)
-    log.Print(len(valid_options))
     regexs := make([]*regexp.Regexp, len(valid_options))
-    log.Print("Compiling Regexs")
     for i, opt := range valid_options {
       regexs[i] = regexp.MustCompile("^" + opt + "$")
-      if i % 100000 == 0 { log.Print(i) }
     }
 
     valid := 0
-    for c, m := range messages {
-      log.Print(c, " ", m)
+    for _, m := range messages {
       good := false
       for _, r := range regexs {
         if r.MatchString(m) {
-          log.Print(m, r.String())
           good = true
           break
         }
