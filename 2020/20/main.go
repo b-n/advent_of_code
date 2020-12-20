@@ -137,12 +137,12 @@ func printTileMap(tileMap [][]*Tile) {
 
 func printPicture(picture [][]string) {
   for _, row := range picture {
-    log.Print(strings.Join(row, ""))
+    fmt.Printf("%s\n", strings.Join(row, ""))
   }
 }
 
 func main() {
-  input := readFile("./test.txt")
+  input := readFile("./input.txt")
 
   rawTiles := strings.Split(strings.TrimRight(input, "\n"), "\n\n")
 
@@ -151,8 +151,6 @@ func main() {
     tile := getTile(t)
     tiles[tile.Id] = tile
   }
-
-  log.Print(len(rawTiles))
 
   // Challenge 1
   {
@@ -268,8 +266,7 @@ func main() {
             // matchingSides always assumes the first argument is correctly oriented, so we rely on that
             t2 := tileMap[y][x-1]
             baseRotation := 3
-            s1, s2 := matchingSides(t2, t1)
-            if s1 != 1 { log.Print("t2 has bad orientation") }
+            _, s2 := matchingSides(t2, t1)
             if s2 < 4 {
               // our data should mirror t1. If we have a direct match, that means we flip!
               t1.Data = flip(t1.Data)
@@ -294,8 +291,7 @@ func main() {
           }
           // orient relative to up
           baseRotation := 0
-          s1, s2 := matchingSides(t2, t1)
-          if s1 != 2 { log.Print("t2 has bad orientation") }
+          _, s2 := matchingSides(t2, t1)
           if s2 < 4 {
             // our data should mirror t1. If we have a direct match, that means we flip!
             t1.Data = flip(t1.Data)
@@ -315,6 +311,7 @@ func main() {
     pictureSize := gridSize * 8
     picture := make([][]string, pictureSize)
     row := 0
+    totalHashes := 0
     for y := 0; y < len(tileMap) * 10; y++ {
       if y % 10 == 0 || y % 10 == 9 { continue }
       picture[row] = make([]string, pictureSize)
@@ -323,10 +320,12 @@ func main() {
         if x % 10 == 0 || x % 10 == 9 { continue }
         tile := tileMap[y/10][x/10]
         picture[row][col] = tile.Data[y%10][x%10]
+        if picture[row][col] == "#" { totalHashes++ }
         col++
       }
       row++
     }
+    printPicture(picture)
 
     monster := []string{
       "                  # ",
@@ -334,9 +333,9 @@ func main() {
       " #  #  #  #  #  #   ",
     }
 
-    for i := 0; i < 8; i++ {
-      log.Print("Iteration ", i)
-      printPicture(picture)
+    monstersFound := 0
+
+    for i := 0; i < 8 && monstersFound == 0; i++ {
       for y := 0; y < pictureSize - len(monster); y++ {
         for x := 0; x < pictureSize - len(monster[0]); x++ {
           if picture[y][x+18] == "#" {
@@ -349,7 +348,9 @@ func main() {
                 }
               }
             }
-            if ifound { log.Print("GOT EM ", x, y) }
+            if ifound {
+              monstersFound++
+            }
           }
         }
       }
@@ -357,5 +358,6 @@ func main() {
       if i == 3 { picture = flip(picture) }
       picture = rotate2dClockwise(picture)
     }
+    log.Print(totalHashes - monstersFound * 15)
   }
 }
