@@ -3,6 +3,7 @@ import (
   "log"
   "io/ioutil"
   "strings"
+  "sort"
 )
 
 func check(e error) {
@@ -23,6 +24,11 @@ type Food struct {
   Allergens []string
 }
 
+type Ingredient struct {
+  Name string
+  Allergen string
+}
+
 func main() {
   input := readFile("./input.txt")
 
@@ -36,10 +42,10 @@ func main() {
     }
   }
 
+  allergenIngredients := map[string][]string{}
   // Challenge 1
   {
     ingredientCounts := map[string]int{}
-    allergenIngredients := map[string][]string{}
 
     for _, f := range foods {
       for _, i := range f.Ingredients {
@@ -80,8 +86,42 @@ func main() {
 
   // Challenge 2
   {
+    assignedIngredients := map[string]string{}
+    assignedAllergens := map[string]bool{}
+    for len(assignedIngredients) < len(allergenIngredients) {
+      for k, v := range allergenIngredients {
+        if assignedAllergens[k] { continue }
+        total := 0
+        ingredient := ""
+        for _, i := range v {
+          if _, ok := assignedIngredients[i]; !ok {
+            ingredient = i
+            total++
+          }
+        }
+        if total == 1 {
+          assignedIngredients[ingredient] = k
+          assignedAllergens[k] = true
+        }
+      }
+    }
+
+    ingredients := make([]Ingredient, len(assignedIngredients))
+    i := 0
+    for k, v := range assignedIngredients {
+      ingredients[i] = Ingredient{
+        Name: k,
+        Allergen: v,
+      }
+      i++
+    }
+
+    sort.Slice(ingredients, func(i, j int) bool {
+      return ingredients[i].Allergen < ingredients[j].Allergen
+    })
+
+    output := make([]string, len(assignedIngredients))
+    for i, k := range ingredients { output[i] = k.Name }
+    log.Print(strings.Join(output,","))
   }
 }
-
-
-
