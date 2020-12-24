@@ -4,6 +4,7 @@ import (
   "io/ioutil"
   "strings"
   "fmt"
+  "strconv"
 )
 
 func check(e error) {
@@ -26,7 +27,8 @@ func getStringFromCoords(coords []int) string {
 func getCoordsFromString(input string) []int {
   res := []int{0,0,0}
   for i, v := range strings.Split(input, ":") {
-    res[i] = int(v[0]) - 48
+    value, _ := strconv.Atoi(v)
+    res[i] = value
   }
   return res
 }
@@ -51,14 +53,6 @@ func coordFromDirection(input []int, direction int) []int {
   return res 
 }
 
-func tileColor(tileMap map[string]bool, coords []int) int {
-  if color, ok := tileMap[getStringFromCoords(coords)]; ok {
-    if color { return 1 }
-    return 0
-  }
-  return -1
-}
-
 func countBlackTiles(tileMap map[string]bool) int {
   total := 0
   for _, tile := range tileMap {
@@ -68,7 +62,7 @@ func countBlackTiles(tileMap map[string]bool) int {
 }
 
 func main() {
-  input := readFile("./test.txt")
+  input := readFile("./input.txt")
 
   input = strings.Replace(input, "ne", "0", -1)
   input = strings.Replace(input, "nw", "1", -1)
@@ -108,12 +102,12 @@ func main() {
   // Challenge 2
   {
     for i := 0; i < 100; i++ {
-      log.Print("Round ", i)
-
-      // expand the borders for the black tiles, they default white, but could be flipped later
+      // add white tiles around the black tiles, they might be flipped in this round
+      blackTiles := map[string]bool{}
       for k, v := range tileColors {
         if !v { continue }
         coords := getCoordsFromString(k)
+        if tileColors[k] { blackTiles[k] = true }
         for j := 0; j < 6; j++ {
           adjacent := getStringFromCoords(coordFromDirection(coords, j))
           if _, ok := tileColors[adjacent]; !ok { tileColors[adjacent] = false }
@@ -126,20 +120,19 @@ func main() {
         coords := getCoordsFromString(k)
 
         // count the surrounding colors
-        colors := []int{0,0}
+        adjacentBlack := 0
         for j := 0; j < 6; j++ {
           adjacent := coordFromDirection(coords, j)
-          color := tileColor(tileColors, adjacent)
-          if color == -1 { colors[0]++; continue }
-          colors[color]++
+          if blackTiles[getStringFromCoords(adjacent)] {
+            adjacentBlack++
+          }
         }
-        //only store the black tiles, we expand for white next round
-        if (v && (colors[1] == 1 || colors[1] == 2)) || (!v && colors[1] == 2) {
+        //only store the black tiles, white tiles are added at the beginning of the round
+        if (v && (adjacentBlack == 1 || adjacentBlack == 2)) || (!v && adjacentBlack == 2) {
           res[k] = true
         }
       }
       tileColors = res
-      log.Print(countBlackTiles(tileColors))
     }
     log.Print(countBlackTiles(tileColors))
   }
