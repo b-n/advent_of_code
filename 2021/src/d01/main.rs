@@ -42,22 +42,23 @@ fn part_2(p: &Path) -> i32 {
     let mut stack: Vec<i32> = vec![0];
     let mut count = 0;
     let mut last = i32::MAX;
+    let mut next = 0;
 
     for line in lines {
         let int_value = utils::line_as_int(line);
 
+        next += int_value;
         stack.push(int_value);
         if stack.len() < 4 {
             continue;
         }
-        stack.remove(0);
+        next -= stack.remove(0);
 
-        let sum: i32 = stack.iter().sum();
-        if sum > last {
+        if next > last {
             count += 1;
         }
 
-        last = sum;
+        last = next;
     }
     count
 }
