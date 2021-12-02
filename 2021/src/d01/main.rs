@@ -1,6 +1,6 @@
 use std::path::Path;
 // crate:: means relevant to this projects root (rust 2018)
-use crate::utils::*;
+use crate::utils::file;
 
 // Learnings:
 // - Many things return a Result<T, E>
@@ -19,13 +19,13 @@ pub fn run() {
 }
 
 fn part_1(p: &Path) -> i32 {
-    let lines = utils::read_to_lines(p);
+    let lines = file::read_to_lines(p);
 
     let mut count = 0;
     let mut last = i32::MAX;
 
     for line in lines {
-        let int_value = utils::line_as_int(line);
+        let int_value = file::line_as_int(line);
 
         if int_value > last {
             count += 1;
@@ -37,7 +37,7 @@ fn part_1(p: &Path) -> i32 {
 }
 
 fn part_2(p: &Path) -> i32 {
-    let lines = utils::read_to_lines(p);
+    let lines = file::read_to_lines(p);
 
     let mut stack: Vec<i32> = vec![0];
     let mut count = 0;
@@ -45,7 +45,7 @@ fn part_2(p: &Path) -> i32 {
     let mut next = 0;
 
     for line in lines {
-        let int_value = utils::line_as_int(line);
+        let int_value = file::line_as_int(line);
 
         next += int_value;
         stack.push(int_value);
