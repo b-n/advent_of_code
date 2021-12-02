@@ -1,5 +1,5 @@
 use std::path::Path;
-use crate::utils::*;
+use crate::utils::{file, coords, coords::Direction::*};
 
 // Learnings:
 // - I should probably learn to parse Strings to Enums
@@ -16,21 +16,20 @@ pub fn run() {
 }
 
 fn p01(p: &Path) -> i32 {
-    let lines = utils::read_to_lines(p);
+    let lines = file::read_to_lines(p);
 
     let mut depth = 0;
     let mut x = 0;
 
     for line in lines {
-        let str_value = utils::line_as_str(line);
+        let str_value = file::line_as_str(line);
 
-        let (direction, distance) = str_to_command(&str_value);
+        let (direction, distance) = str_to_command(&str_value).unwrap();
 
         match direction {
-            "forward" => x += distance,
-            "down" => depth += distance,
-            "up" => depth -= distance,
-            _ => println!("Bad command"),
+            Forward => x += distance,
+            Down => depth += distance,
+            Up => depth -= distance,
         }
     }
     
@@ -38,25 +37,24 @@ fn p01(p: &Path) -> i32 {
 }
 
 fn p02(p: &Path) -> i32 {
-    let lines = utils::read_to_lines(p);
+    let lines = file::read_to_lines(p);
 
     let mut depth = 0;
     let mut x = 0;
     let mut aim = 0;
 
     for line in lines {
-        let str_value = utils::line_as_str(line);
+        let str_value = file::line_as_str(line);
 
-        let (direction, distance) = str_to_command(&str_value);
+        let (direction, distance) = str_to_command(&str_value).unwrap();
 
         match direction {
-            "forward" => {
+            Forward => {
                 x += distance;
                 depth += aim * distance;
             },
-            "down" => aim  += distance,
-            "up" => aim -= distance,
-            _ => println!("Bad command"),
+            Down => aim  += distance,
+            Up => aim -= distance,
         }
     }
     
@@ -70,12 +68,15 @@ fn p02(p: &Path) -> i32 {
 // works, because the function therefore doesn't "own" anything (everything is derrived), and that
 // means it can return something based off the original creation. :mind_blown: (I hope this is
 // fact)
-fn str_to_command(input: &String) -> (&str, i32) {
+fn str_to_command(input: &String) -> Option<(coords::Direction, i32)> {
+    // We return an Option. Why? I think it's because we're handling errors now
     let mut raw_command = input.split(" ");
-    // Nice to use iterators, but... coercion should be easier than a bunch of unwrap()s everywhere
-    let direction = raw_command.next().unwrap();
-    let distance = raw_command.next().unwrap().parse::<i32>().unwrap();
+    // Since the enum implements FromStr, we're able to &str.parse::<EnumType>() it now.Pretty cool
+    let direction = raw_command.next()?.parse::<coords::Direction>().ok()?;
+    // How did we get rid of unwrap on the next? (since it's a Result and all), well with the ?.
+    // This (from what I understand) changes the Error into a None since we return an Option
+    let distance = raw_command.next()?.parse::<i32>().ok()?;
 
-    (direction, distance)
+    Some((direction, distance))
 }
 

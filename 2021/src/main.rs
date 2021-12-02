@@ -1,6 +1,6 @@
 //mod d01;
 mod d02;
-mod utils { pub mod utils; }
+mod utils;
 
 fn main() {
     //d01::main::run();
