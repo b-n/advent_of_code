@@ -11,11 +11,11 @@ use crate::utils::{file, coords, coords::Direction::*};
 pub fn run() {
     let path = Path::new("./input/02");
 
-    println!("Part 1: {}", p01(&path));
-    println!("Part 2: {}", p02(&path));
+    println!("Part 1: {}", p01(&path).unwrap());
+    println!("Part 2: {}", p02(&path).unwrap());
 }
 
-fn p01(p: &Path) -> i32 {
+fn p01(p: &Path) -> Option<i32> {
     let lines = file::read_to_lines(p);
 
     let mut depth = 0;
@@ -24,7 +24,7 @@ fn p01(p: &Path) -> i32 {
     for line in lines {
         let str_value = file::line_as_str(line);
 
-        let (direction, distance) = str_to_command(&str_value).unwrap();
+        let (direction, distance) = str_to_command(&str_value)?;
 
         match direction {
             Forward => x += distance,
@@ -33,10 +33,10 @@ fn p01(p: &Path) -> i32 {
         }
     }
     
-    depth * x
+    Some(depth * x)
 }
 
-fn p02(p: &Path) -> i32 {
+fn p02(p: &Path) -> Option<i32> {
     let lines = file::read_to_lines(p);
 
     let mut depth = 0;
@@ -46,7 +46,7 @@ fn p02(p: &Path) -> i32 {
     for line in lines {
         let str_value = file::line_as_str(line);
 
-        let (direction, distance) = str_to_command(&str_value).unwrap();
+        let (direction, distance) = str_to_command(&str_value)?;
 
         match direction {
             Forward => {
@@ -58,7 +58,7 @@ fn p02(p: &Path) -> i32 {
         }
     }
     
-    depth * x
+    Some(depth * x)
 }
 
 // This needed to be a ref to the String, not the String itself. Why?
