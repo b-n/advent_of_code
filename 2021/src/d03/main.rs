@@ -1,6 +1,5 @@
 use std::path::Path;
 use crate::utils::file;
-use std::io::{Lines, BufReader};
 
 pub fn run() {
     let path = Path::new("./input/03");
@@ -9,114 +8,100 @@ pub fn run() {
     println!("Part 2: {}", p02(&path).unwrap());
 }
 
-fn p01(p: &Path) -> Option<u32> {
+// Learnings:
+// - I really should just read the problem, I started with a transposed 2d array since that is how
+//   it looked like it wanted to be counted, but a 2dmatrix was fine
+// - I like me some bitwise operations. epsilon is fun, xor 1's makes cool things happen
+// - Rust is just c but with inferred types and garbage collection
+// - Embrace Option and Result. Your life will be better (unwrap is for chumps)
+// - Recursion is pretty cool - my first attempt was inefficient
+// - .iter().enumerate() will be my friend
+// - .collect() should be my friend, but I need to get used to reference notation
+// 
+// Rust enjoyment factor [+++-------]
+
+fn p01(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
-    let agg = fill_2d_vector_from_lines(lines)?;
 
-    let bin_length = agg.len();
-    let total_rows = agg[0].len();
+    let vec = file::lines_as_vec2d(lines)?;
 
-    let mut gamma: u32 = 0;
-    let mut epsilon: u32 = 0;
+    let bin_length = vec[0].len();
 
-    for (i, a) in agg.iter().enumerate() {
-        let pos = bin_length - i - 1;
+    let mut bit_counts: Vec<usize> = vec![0; bin_length]; 
 
-        let mut count0 = 0;
-        for val in a.iter() {
-            if *val == '0' { count0 += 1 }
-        }
-
-        if count0 > total_rows / 2  {
-            gamma = gamma | (1 << pos);
-        } else {
-            epsilon = epsilon | (1 << pos);
-        }
+    for line in vec.iter() {
+        for (x, bit) in line.iter().enumerate() {
+            if *bit == '1' { bit_counts[x] += 1 }
+        } 
     }
+
+    let mut res: Vec<char> = vec![];
+    for count in bit_counts.iter() {
+        let mut bit = '0';
+        if *count >= vec.len() / 2 {
+            bit = '1'
+        }
+        res.push(bit);
+    }
+
+    let gamma: usize = binvec_as_usize(&res)?;
+    // 001101 * 111111 = 110010 (flips the bits). can only do that so much though
+    let epsilon: usize = gamma ^ (usize::pow(2, bin_length as u32) - 1);
 
     Some(gamma * epsilon)
 }
 
-fn p02(p: &Path) -> Option<u32> {
+fn p02(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
-    let agg = fill_2d_vector_from_lines(lines)?;
 
-    let oxygen: u32 = value_at_position_in_vec(&agg, &filter_vec_for_sig_bit(&agg, true)?)?;
-    let c02: u32 = value_at_position_in_vec(&agg, &filter_vec_for_sig_bit(&agg, false)?)?;
+    let vec = file::lines_as_vec2d(lines)?;
+
+    // why vec.iter().collect() ? because I want the inner vector to be a reference since that is
+    // what is being filtered down (no need to copy it, we want REFS!
+    // .collect() will [always] make a new Vector though, so we that's how we get nice recursion on
+    // a new vector made out of refs
+    let oxygen: usize = binvec_as_usize(filter_vec_for_sig_bit(vec.iter().collect(), 0, true)?)?;
+    let c02: usize = binvec_as_usize(filter_vec_for_sig_bit(vec.iter().collect(), 0, false)?)?;
 
     Some(oxygen * c02)
 }
 
+fn filter_vec_for_sig_bit(vec2d: Vec<&Vec<char>>, pos: usize, msb: bool) -> Option<&Vec<char>> {
+    if vec2d.len() == 1 {
+        return Some(vec2d[0]);
+    }
 
-fn filter_vec_for_sig_bit(vec: &Vec<Vec<char>>, msb: bool) -> Option<usize> {
+    let mut bit_count = 0;
+    for vec in vec2d.iter() {
+        if vec[pos] == '1' {
+            bit_count += 1;
+        }
+    }
+
+    // this logic looks hard, but it's not. Think about it
+    let mut sb = '0';
+    if msb && bit_count >= (vec2d.len() + 1) / 2 {
+        sb = '1';
+    }
+    if !msb && bit_count < (vec2d.len() + 1) / 2 {
+        sb = '1'
+    }
+
+    let next_vectors: Vec<&Vec<char>> = vec2d.iter()
+        .filter(|v| v[pos] == sb)
+        .map(|v| *v)
+        .collect();
+
+    filter_vec_for_sig_bit(next_vectors, pos + 1, msb)
+}
+
+fn binvec_as_usize(vec: &Vec<char>) -> Option<usize> {
     let mut res: usize = 0;
-
-    let mut possible_index: Vec<usize> = (0..vec[0].len()).collect();
-
-    for a in vec.iter() {
-        let mut count1 = 0;
-
-        for (j, val) in a.iter().enumerate() { 
-            if possible_index.contains(&j) {
-                if *val == '1' { count1 += 1 }
-            }
-        }
-
-        let mut sb = '0';
-
-        if msb && count1 >= (possible_index.len() + 1) / 2 {
-            sb = '1';
-        }
-        if !msb && count1 < (possible_index.len() + 1) / 2 {
-            sb = '1'
-        }
-
-        // keep values that we have in our array, and match the sb
-        let mut to_keep: Vec<usize> = vec![];
-        for (j, val) in a.iter().enumerate() {
-            if possible_index.contains(&j) {
-                if *val == sb { to_keep.push(j) }  
-            }
-        }
-
-        possible_index.retain(|&x| to_keep.contains(&x));
-
-        if possible_index.len() == 1 {
-            res = possible_index[0];
-            break;
-        }
-    }
-
-    Some(res)
-}
-
-fn value_at_position_in_vec(vec: &Vec<Vec<char>>, position: &usize) -> Option<u32> {
-    let mut res: u32 = 0;
+    let vec_len = vec.len();
     for (i, a) in vec.iter().enumerate() {
-        if a[*position] == '1' {
-            res |= 1 << (vec.len() - i - 1);
+        if *a == '1' {
+            res |= 1 << (vec_len - i - 1);
         }
-    }
+    } 
     Some(res)
-}
-
-fn fill_2d_vector_from_lines(lines: Lines<BufReader<std::fs::File>>) -> Option<Vec<Vec<char>>> {
-    let mut agg: Vec<Vec<char>> = vec![];
-
-    for (i, line) in lines.enumerate() {
-        let str_value = file::line_as_str(line);
-
-        // initialise aggregate vector
-        if i == 0 {
-            for _ in 0..str_value.len() {
-                agg.push(vec![]);
-            }
-        }
-         
-        for (j, c) in str_value.chars().enumerate() {
-            agg[j].push(c);
-        }
-    }
-
-    Some(agg)
 }

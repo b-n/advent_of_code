@@ -12,6 +12,15 @@ pub fn line_as_str(line: Result<String>) -> String {
     line.expect("not a line").to_string()
 } 
 
+pub fn lines_as_vec2d(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<char>>> {
+    let mut vec2d: Vec<Vec<char>> = vec![];
+
+    for line in lines {
+        vec2d.push(line_as_str(line).chars().collect());
+    }
+    Some(vec2d)
+}
+
 pub fn read_to_lines(p: &Path) -> Lines<BufReader<File>> {
     let file = File::open(p).expect("Could not find file");
 
