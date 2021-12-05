@@ -1,6 +1,12 @@
 use crate::types::point::Point;
 use std::str::FromStr;
 
+pub enum LineType {
+    Horizontal,
+    Vertical,
+    Diagonal,
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct Line {
     pub start: Point,
@@ -21,35 +27,38 @@ impl Line {
         self.start.x == self.end.x
     }
 
-    // ouch :-(. I tried thinking of a way to sort lines, but brain no work
-    pub fn is_point_in_line(&self, p: &Point) -> bool {
+    pub fn line_type(&self) -> LineType {
         if self.is_horizontal() {
-            if self.start.y != p.y {
-                return false
-            }
-            
-            let (min, max) = if self.start.x < self.end.x {
-                (self.start.x, self.end.x)
-            } else {
-                (self.end.x, self.start.x)
-            };
-
-            p.x >= min && p.x <= max
+            LineType::Horizontal
         } else if self.is_vertical() {
-            if self.start.x != p.x {
-                return false
-            }
-            
-            let (min, max) = if self.start.y < self.end.y {
-                (self.start.y, self.end.y)
-            } else {
-                (self.end.y, self.start.y)
-            };
-
-            p.y >= min && p.y <= max
+            LineType::Vertical
         } else {
-            false
+            LineType::Diagonal
         }
+    }
+
+    pub fn points(&self) -> Option<Vec<Point>> {
+        let (start_x, start_y) = (self.start.x as i64, self.start.y as i64); 
+        let (end_x, end_y) = (self.end.x as i64, self.end.y as i64); 
+
+        let x_diff = end_x - start_x;
+        let x_step = if x_diff == 0 { 0 } else { x_diff / x_diff.abs() };
+
+        let y_diff = end_y - start_y;
+        let y_step = if y_diff == 0 { 0 } else { y_diff / y_diff.abs() };
+
+        let distance = std::cmp::max(x_diff.abs(), y_diff.abs());
+        //println!("Start: {} {}, End: {} {}, distance: {}, xinc: {}, yinc: {}", start_x, start_y, end_x, end_y, distance, x_step, y_step);
+
+        Some(
+            (0..=distance)
+                .map(|i| {
+                    let x = start_x + x_step * i;
+                    let y = start_y + y_step * i;
+                    Point { x: x as usize, y: y as usize } 
+                })
+                .collect::<Vec<Point>>(),
+        )
     }
 }
 

@@ -1,92 +1,86 @@
 use crate::types::line;
-use crate::types::point;
 use crate::utils::file;
 use std::path::Path;
 
 //Learnings
 // - if you're implementing FromStr, you should use parse, not the function itself?? (why?)
 // - Early optimization makes code look bad
-
-type Extent = (usize, usize);
+// - Algorithms are better when you think them through (e.g. where can a point be)
+// - Yeah iterators are nice
+// - My previous rust code was very C in rust. I think I'm gettting the hang of this rust thing a
+//   little bit
+// 
+// Rust enjoyment factor [+++/------] (no change)
 
 pub fn run() {
     let path = Path::new("./input/05");
 
     println!("Part 1: {}", p01(&path).unwrap());
-    //println!("Part 2: {}", p02(&path).unwrap());
+    println!("Part 2: {}", p02(&path).unwrap());
 }
 
 fn p01(p: &Path) -> Option<usize> {
-    let lines = read_path_to_lines(p)?;
+    let raw_lines = read_path_to_lines(p)?;
 
-    let straight_lines = lines
+    let lines = raw_lines
         .iter()
         .filter(|l| l.is_straight())
         .collect::<Vec<&line::Line>>();
 
-    let extents = line_extents(&straight_lines);
+    let (max_x, max_y) = lines
+        .iter()
+        .map(|l| {
+            (
+                std::cmp::max(l.start.x, l.end.x),
+                std::cmp::max(l.start.y, l.end.y),
+            )
+        })
+        .reduce(|acc, item| (std::cmp::max(acc.0, item.0), std::cmp::max(acc.1, item.1)))?;
 
-    let mut dangerous_points = 0;
-    //let mut output: Vec<Vec<usize>> = vec![vec![0; extents.0 .1 - extents.0 .0 + 1]; extents.1 .1 - extents.1 .0 + 1];
+    let mut output: Vec<Vec<usize>> = vec![vec![0; max_x + 1]; max_y + 1];
 
-    for y in extents.1 .0..=extents.1 .1 {
-        for x in extents.0 .0..=extents.0 .1 {
-            let p = point::Point { x, y };
-            let mut intersecting_lines = 0;
-            for line in straight_lines.iter() {
-                if line.is_point_in_line(&p) {
-                    intersecting_lines += 1;
-                }
-                if intersecting_lines >= 2 {
-                    break;
-                }
+    for line in lines {
+        for point in line.points()? {
+            output[point.y][point.x] += 1;
+        }
+    }
+
+    let mut intersections = 0;
+    for row in output {
+        for val in row {
+            if val >= 2 {
+                intersections += 1
             }
+        }
+    }
 
-            //output[y - extents.1 .0][x - extents.0 .0] = intersecting_lines;
-            if intersecting_lines >= 2 {
-                dangerous_points += 1;
-            }
+    Some(intersections)
+}
+
+fn p02(p: &Path) -> Option<usize> {
+    let lines = read_path_to_lines(p)?;
+
+    let mut output: Vec<Vec<usize>> = vec![vec![0; 1000]; 1000];
+
+    for line in lines {
+        for point in line.points()? {
+            //println!("{:?}", point);
+            output[point.y][point.x] += 1;
         }
     }
 
     //for line in output.iter() { println!("{:?}", line); }
 
-    Some(dangerous_points)
-}
+    let mut intersections = 0;
+    for row in output {
+        for val in row {
+            if val >= 2 {
+                intersections += 1
+            }
+        }
+    }
 
-// I should really implement something better here, I do this elsewhere too
-// This really is also a tiny optimization
-fn line_extents(lines: &Vec<&line::Line>) -> (Extent, Extent) {
-    lines
-        .iter()
-        .fold(((usize::MAX, 0), (usize::MAX, 0)), |mut acc, v| {
-            if v.start.x < acc.0 .0 {
-                acc.0 .0 = v.start.x
-            }
-            if v.end.x < acc.0 .0 {
-                acc.0 .0 = v.end.x
-            }
-            if v.start.y < acc.1 .0 {
-                acc.1 .0 = v.start.y
-            }
-            if v.end.y < acc.1 .0 {
-                acc.1 .0 = v.end.y
-            }
-
-            if v.start.x > acc.0 .1 {
-                acc.0 .1 = v.start.x
-            }
-            if v.end.x > acc.0 .1 {
-                acc.0 .1 = v.end.x
-            }
-            if v.start.y > acc.1 .1 {
-                acc.1 .1 = v.start.y
-            }
-            if v.end.y > acc.1 .1 {
-                acc.1 .1 = v.end.y
-            }
-            acc
-        })
+    Some(intersections)
 }
 
 fn read_path_to_lines(p: &Path) -> Option<Vec<line::Line>> {
