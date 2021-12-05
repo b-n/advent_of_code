@@ -7,9 +7,9 @@ mod utils;
 mod types;
 
 fn main() {
-    //d01::main::run();
-    //d02::main::run();
-    //d03::main::run();
-    //d04::main::run();
+    d01::main::run();
+    d02::main::run();
+    d03::main::run();
+    d04::main::run();
     d05::main::run();
 }

@@ -54,5 +54,5 @@ fn p02(p: &Path) -> Option<usize> {
 fn read_path_to_lines(p: &Path) -> impl Iterator<Item = line::Line> {
     file::read_to_lines(p)
         .map(|l| file::line_as_str(l))
-        .map(|l| l.parse::<line::Line>().unwrap())
+        .map(|l| l.unwrap().parse::<line::Line>().unwrap())
 }

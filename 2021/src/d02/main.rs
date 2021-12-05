@@ -1,5 +1,6 @@
+use crate::types::direction::{Direction, Direction::*};
+use crate::utils::file;
 use std::path::Path;
-use crate::utils::{file, coords, coords::Direction::*};
 
 // Learnings:
 // - I should probably learn to parse Strings to Enums
@@ -22,7 +23,7 @@ fn p01(p: &Path) -> Option<i32> {
     let mut x = 0;
 
     for line in lines {
-        let str_value = file::line_as_str(line);
+        let str_value = file::line_as_str(line)?;
 
         let (direction, distance) = str_to_command(&str_value)?;
 
@@ -32,7 +33,7 @@ fn p01(p: &Path) -> Option<i32> {
             Up => depth -= distance,
         }
     }
-    
+
     Some(depth * x)
 }
 
@@ -44,7 +45,7 @@ fn p02(p: &Path) -> Option<i32> {
     let mut aim = 0;
 
     for line in lines {
-        let str_value = file::line_as_str(line);
+        let str_value = file::line_as_str(line)?;
 
         let (direction, distance) = str_to_command(&str_value)?;
 
@@ -52,12 +53,12 @@ fn p02(p: &Path) -> Option<i32> {
             Forward => {
                 x += distance;
                 depth += aim * distance;
-            },
-            Down => aim  += distance,
+            }
+            Down => aim += distance,
             Up => aim -= distance,
         }
     }
-    
+
     Some(depth * x)
 }
 
@@ -68,15 +69,14 @@ fn p02(p: &Path) -> Option<i32> {
 // works, because the function therefore doesn't "own" anything (everything is derrived), and that
 // means it can return something based off the original creation. :mind_blown: (I hope this is
 // fact)
-fn str_to_command(input: &String) -> Option<(coords::Direction, i32)> {
+fn str_to_command(input: &String) -> Option<(Direction, i32)> {
     // We return an Option. Why? I think it's because we're handling errors now
     let mut raw_command = input.split(" ");
     // Since the enum implements FromStr, we're able to &str.parse::<EnumType>() it now.Pretty cool
-    let direction = raw_command.next()?.parse::<coords::Direction>().ok()?;
+    let direction = raw_command.next()?.parse::<Direction>().ok()?;
     // How did we get rid of unwrap on the next? (since it's a Result and all), well with the ?.
     // This (from what I understand) changes the Error into a None since we return an Option
     let distance = raw_command.next()?.parse::<i32>().ok()?;
 
     Some((direction, distance))
 }
-

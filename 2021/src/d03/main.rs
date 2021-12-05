@@ -1,5 +1,5 @@
-use std::path::Path;
 use crate::utils::file;
+use std::path::Path;
 
 pub fn run() {
     let path = Path::new("./input/03");
@@ -17,7 +17,7 @@ pub fn run() {
 // - Recursion is pretty cool - my first attempt was inefficient
 // - .iter().enumerate() will be my friend
 // - .collect() should be my friend, but I need to get used to reference notation
-// 
+//
 // Rust enjoyment factor [+++-------]
 
 fn p01(p: &Path) -> Option<usize> {
@@ -27,12 +27,14 @@ fn p01(p: &Path) -> Option<usize> {
 
     let bin_length = vec[0].len();
 
-    let mut bit_counts: Vec<usize> = vec![0; bin_length]; 
+    let mut bit_counts: Vec<usize> = vec![0; bin_length];
 
     for line in vec.iter() {
         for (x, bit) in line.iter().enumerate() {
-            if *bit == '1' { bit_counts[x] += 1 }
-        } 
+            if *bit == '1' {
+                bit_counts[x] += 1
+            }
+        }
     }
 
     let mut res: Vec<char> = vec![];
@@ -87,10 +89,7 @@ fn filter_vec_for_sig_bit(vec2d: Vec<&Vec<char>>, pos: usize, msb: bool) -> Opti
         sb = '1'
     }
 
-    let next_vectors: Vec<&Vec<char>> = vec2d.iter()
-        .filter(|v| v[pos] == sb)
-        .map(|v| *v)
-        .collect();
+    let next_vectors: Vec<&Vec<char>> = vec2d.iter().filter(|v| v[pos] == sb).map(|v| *v).collect();
 
     filter_vec_for_sig_bit(next_vectors, pos + 1, msb)
 }
@@ -102,6 +101,6 @@ fn binvec_as_usize(vec: &Vec<char>) -> Option<usize> {
         if *a == '1' {
             res |= 1 << (vec_len - i - 1);
         }
-    } 
+    }
     Some(res)
 }

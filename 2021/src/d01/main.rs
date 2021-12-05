@@ -12,20 +12,19 @@ use crate::utils::file;
 
 pub fn run() {
     let path = Path::new("./input/01");
-    println!("{:?}", path);
 
-    println!("Part 1: {}", part_1(path));
-    println!("Part 2: {}", part_2(path));
+    println!("Part 1: {}", part_1(path).unwrap());
+    println!("Part 2: {}", part_2(path).unwrap());
 }
 
-fn part_1(p: &Path) -> i32 {
+fn part_1(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
 
     let mut count = 0;
-    let mut last = i32::MAX;
+    let mut last = usize::MAX;
 
     for line in lines {
-        let int_value = file::line_as_int(line);
+        let int_value = file::line_as_usize(line)?;
 
         if int_value > last {
             count += 1;
@@ -33,19 +32,19 @@ fn part_1(p: &Path) -> i32 {
 
         last = int_value;
     }
-    count
+    Some(count)
 }
 
-fn part_2(p: &Path) -> i32 {
+fn part_2(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
 
-    let mut stack: Vec<i32> = vec![0];
+    let mut stack: Vec<usize> = vec![0];
     let mut count = 0;
-    let mut last = i32::MAX;
+    let mut last = usize::MAX;
     let mut next = 0;
 
     for line in lines {
-        let int_value = file::line_as_int(line);
+        let int_value = file::line_as_usize(line)?;
 
         next += int_value;
         stack.push(int_value);
@@ -60,5 +59,5 @@ fn part_2(p: &Path) -> i32 {
 
         last = next;
     }
-    count
+    Some(count)
 }
