@@ -22,8 +22,7 @@ pub fn run() {
 
 fn p01(p: &Path) -> Option<usize> {
     Some(
-        read_path_to_lines(p)?
-            .iter()
+        read_path_to_lines(p)
             .filter(|l| l.is_straight())
             .flat_map(|l| l.points().unwrap())
             .fold(HashMap::new(), |mut acc, p| {
@@ -39,8 +38,7 @@ fn p01(p: &Path) -> Option<usize> {
 
 fn p02(p: &Path) -> Option<usize> {
     Some(
-        read_path_to_lines(p)?
-            .iter()
+        read_path_to_lines(p)
             .flat_map(|l| l.points().unwrap())
             .fold(HashMap::new(), |mut acc, p| {
                 *acc.entry(p).or_insert(0) += 1;
@@ -53,11 +51,8 @@ fn p02(p: &Path) -> Option<usize> {
     )
 }
 
-fn read_path_to_lines(p: &Path) -> Option<Vec<line::Line>> {
-    Some(
-        file::read_to_lines(p)
-            .map(|l| file::line_as_str(l))
-            .map(|l| l.parse::<line::Line>().unwrap())
-            .collect::<Vec<line::Line>>(),
-    )
+fn read_path_to_lines(p: &Path) -> impl Iterator<Item = line::Line> {
+    file::read_to_lines(p)
+        .map(|l| file::line_as_str(l))
+        .map(|l| l.parse::<line::Line>().unwrap())
 }
