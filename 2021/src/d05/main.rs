@@ -1,5 +1,6 @@
 use crate::types::line;
 use crate::utils::file;
+use std::collections::HashMap;
 use std::path::Path;
 
 //Learnings
@@ -9,7 +10,7 @@ use std::path::Path;
 // - Yeah iterators are nice
 // - My previous rust code was very C in rust. I think I'm gettting the hang of this rust thing a
 //   little bit
-// 
+//
 // Rust enjoyment factor [+++/------] (no change)
 
 pub fn run() {
@@ -20,67 +21,36 @@ pub fn run() {
 }
 
 fn p01(p: &Path) -> Option<usize> {
-    let raw_lines = read_path_to_lines(p)?;
-
-    let lines = raw_lines
-        .iter()
-        .filter(|l| l.is_straight())
-        .collect::<Vec<&line::Line>>();
-
-    let (max_x, max_y) = lines
-        .iter()
-        .map(|l| {
-            (
-                std::cmp::max(l.start.x, l.end.x),
-                std::cmp::max(l.start.y, l.end.y),
-            )
-        })
-        .reduce(|acc, item| (std::cmp::max(acc.0, item.0), std::cmp::max(acc.1, item.1)))?;
-
-    let mut output: Vec<Vec<usize>> = vec![vec![0; max_x + 1]; max_y + 1];
-
-    for line in lines {
-        for point in line.points()? {
-            output[point.y][point.x] += 1;
-        }
-    }
-
-    let mut intersections = 0;
-    for row in output {
-        for val in row {
-            if val >= 2 {
-                intersections += 1
-            }
-        }
-    }
-
-    Some(intersections)
+    Some(
+        read_path_to_lines(p)?
+            .iter()
+            .filter(|l| l.is_straight())
+            .flat_map(|l| l.points().unwrap())
+            .fold(HashMap::new(), |mut acc, p| {
+                *acc.entry(p).or_insert(0) += 1;
+                acc
+            })
+            .values()
+            .filter(|&v| *v >= 2)
+            .collect::<Vec<&i32>>()
+            .len(),
+    )
 }
 
 fn p02(p: &Path) -> Option<usize> {
-    let lines = read_path_to_lines(p)?;
-
-    let mut output: Vec<Vec<usize>> = vec![vec![0; 1000]; 1000];
-
-    for line in lines {
-        for point in line.points()? {
-            //println!("{:?}", point);
-            output[point.y][point.x] += 1;
-        }
-    }
-
-    //for line in output.iter() { println!("{:?}", line); }
-
-    let mut intersections = 0;
-    for row in output {
-        for val in row {
-            if val >= 2 {
-                intersections += 1
-            }
-        }
-    }
-
-    Some(intersections)
+    Some(
+        read_path_to_lines(p)?
+            .iter()
+            .flat_map(|l| l.points().unwrap())
+            .fold(HashMap::new(), |mut acc, p| {
+                *acc.entry(p).or_insert(0) += 1;
+                acc
+            })
+            .values()
+            .filter(|&v| *v >= 2)
+            .collect::<Vec<&i32>>()
+            .len(),
+    )
 }
 
 fn read_path_to_lines(p: &Path) -> Option<Vec<line::Line>> {
