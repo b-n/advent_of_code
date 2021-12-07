@@ -1,5 +1,5 @@
+use crate::utils::{file, math, vec};
 use std::path::Path;
-use crate::utils::file;
 
 //Learnings:
 // - going straight to iteration now, instead of first writing loops. This feels better
@@ -16,39 +16,38 @@ pub fn run() {
     println!("Part 2: {}", p02(path).unwrap());
 }
 
-fn p01(p: &Path) -> Option<i64> {
+fn p01(p: &Path) -> Option<usize> {
     let raw_input = file::line_as_str(file::read_to_lines(p).next()?)?;
-    
-    let crabs = csv_to_vec(raw_input)?;
+
+    let crabs = file::csv_to_vec::<usize>(raw_input)?;
+
+    let vec::MinMax { min, max } = vec::min_max(&crabs);
 
     // This is computationally inefficient. It would be quicker to do a tree search
-    let costs = (0..1000)
-        .map(|i| {
-            crabs.iter()
-                .map(|c| (c - i).abs())
-                .sum()
-        }).collect::<Vec<i64>>();
+    let costs = (min..=max)
+        .map(|i| crabs.iter().map(|c| math::abs_diff(c, &i)).sum())
+        .collect::<Vec<usize>>();
 
     Some(*costs.iter().min()?)
 }
 
-fn p02(p: &Path) -> Option<i64> {
+fn p02(p: &Path) -> Option<usize> {
     let raw_input = file::line_as_str(file::read_to_lines(p).next()?)?;
 
-    let crabs = csv_to_vec(raw_input)?;
+    let crabs = file::csv_to_vec::<usize>(raw_input)?;
+
+    let vec::MinMax { min, max } = vec::min_max(&crabs);
 
     // As P1, could be a bit faster here
-    let costs = (0..1000)
+    let costs = (min..=max)
         .map(|i| {
-            crabs.iter()
-                .map(|c| (c - i).abs())
-                .map(|c| c * (c + 1) /2)
+            crabs
+                .iter()
+                .map(|c| math::abs_diff(c, &i))
+                .map(|c| c * (c + 1) / 2)
                 .sum()
-        }).collect::<Vec<i64>>();
+        })
+        .collect::<Vec<usize>>();
 
     Some(*costs.iter().min()?)
-}
-
-fn csv_to_vec(s: String) -> Option<Vec<i64>> {
-    Some(s.split(",").map(|x| x.parse::<i64>().unwrap()).collect())
 }
