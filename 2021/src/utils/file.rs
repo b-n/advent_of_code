@@ -28,9 +28,10 @@ pub fn lines_as_vec2d(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<char>>> {
 }
 
 #[allow(dead_code)]
-pub fn csv_to_vec<T: FromStr>(s: String) -> Option<Vec<T>>
+pub fn csv_to_vec<T>(s: String) -> Option<Vec<T>>
 where
-    <T as FromStr>::Err: Debug,
+    T: FromStr,
+    <T as FromStr>::Err: Debug, // The T that looks like FromStr has an Err which implements Debug
 {
     Some(s.split(",").map(|x| x.parse::<T>().unwrap()).collect())
 }
