@@ -4,6 +4,7 @@ mod d03;
 mod d04;
 mod d05;
 mod d06;
+mod d07;
 mod utils;
 mod types;
 
@@ -14,5 +15,6 @@ fn main() {
     //d04::main::run();
     //d05::main::run();
     //d05::main::run();
-    d06::main::run();
+    //d06::main::run();
+    d07::main::run();
 }
