@@ -24,7 +24,7 @@ fn part_1(p: &Path) -> Option<usize> {
     let mut last = usize::MAX;
 
     for line in lines {
-        let int_value = file::line_as_usize(line)?;
+        let int_value = file::line_as_usize(line).ok()?;
 
         if int_value > last {
             count += 1;
@@ -44,7 +44,7 @@ fn part_2(p: &Path) -> Option<usize> {
     let mut next = 0;
 
     for line in lines {
-        let int_value = file::line_as_usize(line)?;
+        let int_value = file::line_as_usize(line).ok()?;
 
         next += int_value;
         stack.push(int_value);

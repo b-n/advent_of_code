@@ -53,7 +53,7 @@ fn iterate_spawners(spawners: &mut Vec<Spawner>, days: usize) {
 }
 
 fn p01(p: &Path) -> Option<usize> {
-    let raw_input = file::line_as_str(file::read_to_lines(p).next()?)?;
+    let raw_input = file::line_as_str(file::read_to_lines(p).next()?).ok()?;
     
     let mut spawners = (0..7)
         .map(|d| Spawner::new(d))
@@ -70,7 +70,7 @@ fn p01(p: &Path) -> Option<usize> {
 }
 
 fn p02(p: &Path) -> Option<usize> {
-    let raw_input = file::line_as_str(file::read_to_lines(p).next()?)?;
+    let raw_input = file::line_as_str(file::read_to_lines(p).next()?).ok()?;
     
     let mut spawners = (0..7)
         .map(|d| Spawner::new(d))

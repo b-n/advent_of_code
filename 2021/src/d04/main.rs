@@ -138,7 +138,7 @@ fn p02(p: &Path) -> Option<usize> {
 fn bingo_game_from_path(p: &Path) -> Option<BingoGame> {
     let mut lines = file::read_to_lines(p);
 
-    let raw_numbers = file::line_as_str(lines.next()?)?;
+    let raw_numbers = file::line_as_str(lines.next()?).ok()?;
 
     let numbers: Vec<usize> = csv_to_vec(raw_numbers)?;
     let mut players: Vec<BingoPlayer> = vec![];
@@ -147,7 +147,7 @@ fn bingo_game_from_path(p: &Path) -> Option<BingoGame> {
     while let Some(_) = lines.next() {
         let mut board = vec![];
         for _ in 0..5 {
-            let str_value = file::line_as_str(lines.next()?)?;
+            let str_value = file::line_as_str(lines.next()?).ok()?;
             board.push(bingo_line_to_vec(str_value)?);
         }
         players.push(BingoPlayer::new(board));

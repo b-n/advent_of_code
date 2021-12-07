@@ -4,17 +4,31 @@ use std::path::Path;
 use std::str::FromStr;
 // prelude is actually a module which is needed by BufReader funcs etc
 //   ref: https://doc.rust-lang.org/stable/std/io/prelude/index.html
-use std::io;
-use std::io::{prelude::*, BufReader, Lines};
+use std::io::{self, prelude::*, BufReader, Lines};
 
-#[allow(dead_code)]
-pub fn line_as_usize(line: io::Result<String>) -> Option<usize> {
-    Some(line_as_str(line)?.parse::<usize>().ok()?)
+#[derive(Debug, Clone)]
+pub struct ParseError {
+    message: String
+}
+impl From<io::Error> for ParseError {
+    fn from(error: io::Error) -> Self {
+        Self { message: format!("io::Error {}", error) }
+    }
+}
+impl From<std::num::ParseIntError> for ParseError {
+    fn from(error: std::num::ParseIntError) -> Self {
+        Self { message: format!("ParseIntError {}", error) }
+    }
 }
 
 #[allow(dead_code)]
-pub fn line_as_str(line: io::Result<String>) -> Option<String> {
-    Some(line.ok()?.to_string())
+pub fn line_as_usize(line: io::Result<String>) -> Result<usize, ParseError> {
+    Ok(line_as_str(line)?.parse::<usize>()?)
+}
+
+#[allow(dead_code)]
+pub fn line_as_str(line: io::Result<String>) -> Result<String, ParseError> {
+    Ok(line?.to_string())
 }
 
 #[allow(dead_code)]

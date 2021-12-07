@@ -23,7 +23,7 @@ fn p01(p: &Path) -> Option<i32> {
     let mut x = 0;
 
     for line in lines {
-        let str_value = file::line_as_str(line)?;
+        let str_value = file::line_as_str(line).ok()?;
 
         let (direction, distance) = str_to_command(&str_value)?;
 
@@ -45,7 +45,7 @@ fn p02(p: &Path) -> Option<i32> {
     let mut aim = 0;
 
     for line in lines {
-        let str_value = file::line_as_str(line)?;
+        let str_value = file::line_as_str(line).ok()?;
 
         let (direction, distance) = str_to_command(&str_value)?;
 

@@ -17,7 +17,7 @@ pub fn run() {
 }
 
 fn p01(p: &Path) -> Option<usize> {
-    let raw_input = file::line_as_str(file::read_to_lines(p).next()?)?;
+    let raw_input = file::line_as_str(file::read_to_lines(p).next()?).ok()?;
 
     let crabs = file::csv_to_vec::<usize>(raw_input).ok()?;
 
@@ -32,7 +32,7 @@ fn p01(p: &Path) -> Option<usize> {
 }
 
 fn p02(p: &Path) -> Option<usize> {
-    let raw_input = file::line_as_str(file::read_to_lines(p).next()?)?;
+    let raw_input = file::line_as_str(file::read_to_lines(p).next()?).ok()?;
 
     let crabs = file::csv_to_vec::<usize>(raw_input).ok()?;
 
