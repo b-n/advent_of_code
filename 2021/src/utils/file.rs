@@ -4,15 +4,16 @@ use std::path::Path;
 use std::str::FromStr;
 // prelude is actually a module which is needed by BufReader funcs etc
 //   ref: https://doc.rust-lang.org/stable/std/io/prelude/index.html
-use std::io::{prelude::*, BufReader, Lines, Result};
+use std::io;
+use std::io::{prelude::*, BufReader, Lines};
 
 #[allow(dead_code)]
-pub fn line_as_usize(line: Result<String>) -> Option<usize> {
+pub fn line_as_usize(line: io::Result<String>) -> Option<usize> {
     Some(line_as_str(line)?.parse::<usize>().ok()?)
 }
 
 #[allow(dead_code)]
-pub fn line_as_str(line: Result<String>) -> Option<String> {
+pub fn line_as_str(line: io::Result<String>) -> Option<String> {
     Some(line.ok()?.to_string())
 }
 
@@ -28,12 +29,14 @@ pub fn lines_as_vec2d(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<char>>> {
 }
 
 #[allow(dead_code)]
-pub fn csv_to_vec<T>(s: String) -> Option<Vec<T>>
+pub fn csv_to_vec<T>(s: String) -> Result<Vec<T>, T::Err>
 where
     T: FromStr,
     <T as FromStr>::Err: Debug, // The T that looks like FromStr has an Err which implements Debug
 {
-    Some(s.split(",").map(|x| x.parse::<T>().unwrap()).collect())
+    s.split(",")
+        .map(|x| x.parse::<T>())
+        .collect()
 }
 
 #[allow(dead_code)]

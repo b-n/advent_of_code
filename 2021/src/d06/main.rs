@@ -59,7 +59,7 @@ fn p01(p: &Path) -> Option<usize> {
         .map(|d| Spawner::new(d))
         .collect::<Vec<Spawner>>();
 
-    for f in file::csv_to_vec::<usize>(raw_input)?.iter() {
+    for f in file::csv_to_vec::<usize>(raw_input).ok()?.iter() {
         spawners[*f].fish += 1;
     }
 
@@ -76,7 +76,7 @@ fn p02(p: &Path) -> Option<usize> {
         .map(|d| Spawner::new(d))
         .collect::<Vec<Spawner>>();
 
-    for f in file::csv_to_vec::<usize>(raw_input)?.iter() {
+    for f in file::csv_to_vec::<usize>(raw_input).ok()?.iter() {
         spawners[*f].fish += 1;
     }
 
