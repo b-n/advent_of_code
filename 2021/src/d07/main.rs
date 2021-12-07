@@ -1,5 +1,4 @@
 use std::path::Path;
-use std::collections::HashMap;
 use crate::utils::file;
 
 //Learnings:
@@ -7,6 +6,7 @@ use crate::utils::file;
 // - I should abstract some of my solution more, but naive woo yay
 // - It's kind of annoying getting refs to things (e.g. min/max gives a ref), but i understand why
 // - I may come back and revisit a split search since that'd be way more effective
+// - TRIANGLE NUMBERS are easy to calculate!
 // Rust Enjoyment factor: [++++------] +1/2 ?
 
 pub fn run() {
@@ -21,8 +21,7 @@ fn p01(p: &Path) -> Option<i64> {
     
     let crabs = csv_to_vec(raw_input)?;
 
-    // This is computationally inefficient. It would be quicker to do a split search (e.g. start at
-    // position 500, check 250 and 750, move that direction etc.
+    // This is computationally inefficient. It would be quicker to do a tree search
     let costs = (0..1000)
         .map(|i| {
             crabs.iter()
@@ -38,22 +37,12 @@ fn p02(p: &Path) -> Option<i64> {
 
     let crabs = csv_to_vec(raw_input)?;
 
-    let max_crab = crabs.iter().max()?;
-
-    // naive cache is cache
-    let (cost_map, _) = (0..=*max_crab)
-        .fold((HashMap::new(), 0), |mut acc, i: i64| {
-            let next = acc.1 + i;
-            acc.0.insert(i, next);
-            (acc.0, next)
-        });
-
     // As P1, could be a bit faster here
     let costs = (0..1000)
         .map(|i| {
             crabs.iter()
                 .map(|c| (c - i).abs())
-                .map(|c| cost_map.get(&c).unwrap())
+                .map(|c| c * (c + 1) /2)
                 .sum()
         }).collect::<Vec<i64>>();
 
