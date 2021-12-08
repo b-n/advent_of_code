@@ -1,29 +1,24 @@
 use crate::utils::file;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::path::Path;
 
-pub fn run() {
-    let path = Path::new("./input/08_example");
+// Learnings:
+//  - We're at that pen and paper stage of aoc
+//  - HashSet equality is something pretty damn cool
+//  - Doing this stuff in rust is.... not pretty
+//
+//  Rust enjoyment factor [++++------]
 
-    //println!("Part 1: {}", p01(path).unwrap());
+pub fn run() {
+    let path = Path::new("./input/08");
+
+    println!("Part 1: {}", p01(path).unwrap());
     println!("Part 2: {}", p02(path).unwrap());
 }
-
-// 0 : abcefg
-// 1 : cf      *
-// 2 : acdeg
-// 3 : acdfg
-// 4 : bcdf    *
-// 5 : abdfg
-// 6 : abdefg
-// 7 : acf     *
-// 8 : abcedfg *
-// 9 : abcdfg
 
 fn p01(p: &Path) -> Option<usize> {
     let raw_input = file::read_to_lines(p);
 
-    //let counts: Vec<usize> = vec![0; 10];
     let easy_number_lens: Vec<usize> = vec![2, 3, 4, 7];
 
     Some(
@@ -56,34 +51,27 @@ fn p02(p: &Path) -> Option<usize> {
 }
 
 fn signal_value(unique_signals: &Vec<String>, output_values: &Vec<String>) -> usize {
-    let mut signal_hashsets: Vec<HashSet<char>> = vec![];
-    for s in unique_signals.iter() {
-        let mut signal_hash = HashSet::new();
-        for c in s.chars() {
-            signal_hash.insert(c);
-        }
+    let signal_hashsets = unique_signals
+        .iter()
+        .map(|s| set_from_iter(&mut s.chars()))
+        .collect::<Vec<HashSet<char>>>();
 
-        signal_hashsets.push(signal_hash)
-    }
+    let d1: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 2).unwrap();
+    let d7: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 3).unwrap();
+    let d4: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 4).unwrap();
+    let d8: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 7).unwrap();
 
-    println!("{:?}", signal_hashsets);
-
-    let digit1: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 2).unwrap();
-    let digit7: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 3).unwrap();
-    let digit4: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 4).unwrap();
-    let digit8: &HashSet<char> = find_in_vec_by_len(&signal_hashsets, 7).unwrap();
-    //let mut digit9;
-
-    // find a = diff between 7 and 1
-    let a_char = *(digit7.difference(digit1).collect::<Vec<&char>>()[0]);
+    // a = diff between 7 and 1
+    let a_char = *(d7.difference(d1).collect::<Vec<&char>>()[0]);
     // these all get overwritten
     let mut g_char = 'g';
     let mut d_char = 'd';
 
-    // find 9/g = hashset len 6 and has 4 + a 
-    let mut check_g = digit4.clone();
+    // find 9/g = hashset len 6 and has 4 + a
+    let mut check_g = d4.clone();
     check_g.insert(a_char);
-    let digit9 = (*signal_hashsets).iter()
+    let d9 = (*signal_hashsets)
+        .iter()
         .filter(|s| s.len() == 6)
         .filter(|sh| {
             let diff = sh.difference(&check_g).collect::<Vec<&char>>();
@@ -93,14 +81,16 @@ fn signal_value(unique_signals: &Vec<String>, output_values: &Vec<String>) -> us
             } else {
                 false
             }
-        }).next().unwrap();
-
+        })
+        .next()
+        .unwrap();
 
     // find 3/d = hashset len 5 and has 1 + a + g
-    let mut check_d = digit1.clone();
+    let mut check_d = d1.clone();
     check_d.insert(g_char);
     check_d.insert(a_char);
-    let digit3 = (*signal_hashsets).iter()
+    let d3 = (*signal_hashsets)
+        .iter()
         .filter(|s| s.len() == 5)
         .filter(|sh| {
             let diff = sh.difference(&check_d).collect::<Vec<&char>>();
@@ -110,15 +100,68 @@ fn signal_value(unique_signals: &Vec<String>, output_values: &Vec<String>) -> us
             } else {
                 false
             }
-        }).next().unwrap();
-     
-    // find 6/be = 
+        })
+        .next()
+        .unwrap();
 
-    println!("{} {} {}", a_char, g_char, d_char);
+    let mut check0 = d7.clone();
+    check0.insert(g_char);
+    let d0 = (*signal_hashsets)
+        .iter()
+        .filter(|s| s.len() == 6 && s != &d9)
+        .filter(|sh| sh.difference(&check_d).collect::<Vec<&char>>().len() == 2)
+        .next()
+        .unwrap();
 
-    println!("{:?} {:?}", unique_signals, a_char);
+    let d6 = (*signal_hashsets)
+        .iter()
+        .filter(|s| s.len() == 6 && s != &d9 && s != &d0)
+        .next()
+        .unwrap();
 
-    0
+    let d2 = (*signal_hashsets)
+        .iter()
+        .filter(|s| s.len() == 5 && s != &d3)
+        .filter(|s| s.difference(d6).collect::<Vec<&char>>().len() == 1)
+        .next()
+        .unwrap();
+
+    let d5 = (*signal_hashsets)
+        .iter()
+        .filter(|s| s.len() == 5 && s != &d3 && s != &d2)
+        .next()
+        .unwrap();
+
+    let digits = vec![d0, d1, d2, d3, d4, d5, d6, d7, d8, d9];
+
+    let base: usize = 10;
+
+    // For each output value, get the HashSet, Find it's position in the digits vector (position =
+    // digit), and then get the output value with some math::pow magic
+    output_values
+        .iter()
+        .map(|s| set_from_iter(&mut s.chars()))
+        .map(|v| {
+            let pos = digits.iter().position(|&d| d == &v).unwrap();
+            pos
+        })
+        .enumerate()
+        .map(|(i, v)| base.pow(3 - i as u32) * v)
+        .sum()
+}
+
+// I'm pretty proud of this one. I didn't even do much googling
+// What's it do? create a HashSet from an iterator
+fn set_from_iter<T, I>(it: &mut I) -> HashSet<T>
+where
+    T: std::hash::Hash + Eq,
+    I: Iterator<Item = T>,
+{
+    let mut res = HashSet::new();
+    while let Some(value) = it.next() {
+        res.insert(value);
+    }
+    res
 }
 
 fn find_in_vec_by_len(vec: &Vec<HashSet<char>>, len: usize) -> Option<&HashSet<char>> {
