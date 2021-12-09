@@ -32,7 +32,7 @@ pub fn line_as_str(line: io::Result<String>) -> Result<String, ParseError> {
 }
 
 #[allow(dead_code)]
-pub fn lines_as_vec2d(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<char>>> {
+pub fn lines_as_vec2d<>(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<char>>> {
     Some(
         lines
             .map(|l| line_as_str(l))
