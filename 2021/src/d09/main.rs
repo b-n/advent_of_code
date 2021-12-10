@@ -110,18 +110,11 @@ fn lowest_surrounding(
     y: i32,
     dirs: &Vec<(i32, i32)>,
 ) -> Option<i32> {
-    let max_y = chart.len() as i32;
-    let max_x = chart[0].len() as i32;
     dirs.iter()
         .map(|(step_x, step_y)| {
             let comp_x = (x + step_x) as usize;
             let comp_y = (y + step_y) as usize;
             value_in_chart(chart, comp_x, comp_y)
-            //if comp_x < 0 || comp_y < 0 || comp_x >= max_x || comp_y >= max_y {
-            //9
-            //} else {
-            //chart[comp_y as usize][comp_x as usize]
-            //}
         })
         .min()
 }
