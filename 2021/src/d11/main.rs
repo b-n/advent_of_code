@@ -21,51 +21,55 @@ const DIRS: &'static [(i32, i32)] = &[
 
 fn p01(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
-
     let mut chart = Chart::from_2d_vec(&file::lines_as_vec2d_usize(lines)?);
 
     let steps = 100;
+    Some(
+        (0..steps)
+            .map(|_| {
+                chart.inc(1);
 
-    let mut total_flashes: usize = 0;
-    for _ in 0..steps {
-        chart.inc(1);
+                let mut flashed_points: Vec<Point3d> = vec![];
+                while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
 
-        let mut flashed_points: Vec<Point3d> = vec![];
-        while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
-
-        total_flashes += chart.reset(|p| p.z >= 10);
-    }
-    Some(total_flashes)
+                chart.reset(|p| p.z >= 10)
+            })
+            .sum(),
+    )
 }
 
 fn p02(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
-
     let mut chart = Chart::from_2d_vec(&file::lines_as_vec2d_usize(lines)?);
 
     let mut step: usize = 1; //we start at step 1....
-    loop {
+    'next: loop {
         chart.inc(1);
 
         let mut flashed_points: Vec<Point3d> = vec![];
         while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
 
         chart.reset(|p| p.z >= 10);
-
-        // if min = max, I guess we're all the same!
-        let values = chart.iter().map(|p| p.z).collect::<Vec<usize>>();
-        if values.iter().min() == values.iter().max() {
-            break;
+        
+        //uniformity only happens on 0 since it takes a flash to get there
+        for p in chart.iter() {
+            if p.z != 0 {
+                step += 1;
+                continue 'next;
+            }
         }
-
-        step += 1;
+        break;
     }
 
     Some(step)
 }
 
+// The code looks spaghet, but it's interesting why
+// Since the first filter/map is operating on a borrowed reference from chart/flashed_points, then
+// it's prevents any further get/mutations. This is why we collect in the middle, since it removes
+// any borrows (all refs are flattened into values)
 fn cycle_step(chart: &mut Chart, flashed_points: &mut Vec<Point3d>) -> Option<usize> {
-    let flashed: usize = chart
+    match chart
         .iter()
         .filter(|p| !flashed_points.contains(p) && p.z >= 10)
         .map(|p| *p)
@@ -75,18 +79,20 @@ fn cycle_step(chart: &mut Chart, flashed_points: &mut Vec<Point3d>) -> Option<us
             flashed_points.push(*p);
             flash_point(chart, *p);
         })
-        .count();
-
-    match flashed {
+        .count()
+    {
         p if p > 0 => Some(p),
         _ => None,
     }
 }
 
+// this is kind of cool with Option:
+// - chart.at_pos returns an option.
+//   - If it's None, then it's out of bounds (e.g. couldn't find the point)
+//   - otherwise it returns the mutateable point
 fn flash_point(chart: &mut Chart, p: Point3d) {
     for (x, y) in DIRS.iter() {
-        let p2 = chart.at_pos((p.x as i32 + x) as usize, (p.y as i32 + y) as usize);
-        match p2 {
+        match chart.at_pos((p.x as i32 + x) as usize, (p.y as i32 + y) as usize) {
             Some(p2) => p2.z += 1,
             None => (),
         }
