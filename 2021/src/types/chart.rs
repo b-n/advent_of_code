@@ -3,12 +3,19 @@ use std::fmt;
 
 pub struct Chart {
     points: Vec<Vec<Point3d>>,
+    y_max: usize,
+    x_max: usize,
 }
 
 impl Chart {
+    pub fn new(points: Vec<Vec<Point3d>>) -> Self {
+        let y_max = points.len();
+        let x_max = points[0].len();
+        Self { points: points, y_max, x_max }
+    }
+
     pub fn from_2d_vec(input: &Vec<Vec<usize>>) -> Self {
-        Self {
-            points: input
+        Self::new(input
                 .iter()
                 .enumerate()
                 .map(|(y, row)| {
@@ -17,15 +24,13 @@ impl Chart {
                         .map(|(x, z)| Point3d { x, y, z: *z })
                         .collect::<Vec<Point3d>>()
                 })
-                .collect::<Vec<Vec<Point3d>>>()
-            ,
-        }
+                .collect::<Vec<Vec<Point3d>>>())
     }
 
     pub fn at_pos(&mut self, x: usize, y: usize) -> Option<&mut Point3d> {
         match (x, y) {
-            (_, y) if y >= self.points.len() => None,
-            (x, _) if x >= self.points[0].len() => None,
+            (_, y) if y >= self.y_max => None,
+            (x, _) if x >= self.x_max => None,
             _ => Some(&mut self.points[y][x])
         }
     }
@@ -43,10 +48,8 @@ impl Chart {
     }
 
     pub fn inc(&mut self, i: usize) {
-        for l in self.points.iter_mut() {
-            for r in l.iter_mut() {
-                r.z += i;
-            }
+        for p in self.iter_mut() {
+            p.z += i;
         }
     }
 }

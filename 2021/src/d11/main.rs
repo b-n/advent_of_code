@@ -8,23 +8,21 @@ pub fn run() {
     println!("Part 1: {}", p01(path).unwrap());
     println!("Part 2: {}", p02(path).unwrap());
 }
+const DIRS: &'static [(i32, i32)] = &[
+    (0, -1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+    (0, 1),
+    (-1, 1),
+    (-1, 0),
+    (-1, -1),
+];
 
 fn p01(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
 
     let mut chart = Chart::from_2d_vec(&file::lines_as_vec2d_usize(lines)?);
-
-    //println!("{}", chart);
-    let dirs: Vec<(i32, i32)> = vec![
-        (0, -1),
-        (1, -1),
-        (1, 0),
-        (1, 1),
-        (0, 1),
-        (-1, 1),
-        (-1, 0),
-        (-1, -1),
-    ];
 
     let steps = 100;
 
@@ -33,21 +31,13 @@ fn p01(p: &Path) -> Option<usize> {
         chart.inc(1);
 
         let mut flashed_points: Vec<Point3d> = vec![];
-        while let Some(_) = cycle_step(&mut chart, &mut flashed_points, &dirs) {}
+        while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
 
         total_flashes += chart
             .iter_mut()
-            .map(|p| {
-                if p.z >= 10 {
-                    p.z = 0;
-                    1
-                } else {
-                    0
-                }
-            })
-            .sum::<usize>();
-
-        //println!("{}", chart);
+            .filter(|p| p.z >= 10)
+            .map(|p| p.z = 0)
+            .count();
     }
     Some(total_flashes)
 }
@@ -57,39 +47,19 @@ fn p02(p: &Path) -> Option<usize> {
 
     let mut chart = Chart::from_2d_vec(&file::lines_as_vec2d_usize(lines)?);
 
-    //println!("{}", chart);
-    let dirs: Vec<(i32, i32)> = vec![
-        (0, -1),
-        (1, -1),
-        (1, 0),
-        (1, 1),
-        (0, 1),
-        (-1, 1),
-        (-1, 0),
-        (-1, -1),
-    ];
-
     let mut step: usize = 1; //we start at step 1....
     loop {
         chart.inc(1);
 
         let mut flashed_points: Vec<Point3d> = vec![];
-        while let Some(_) = cycle_step(&mut chart, &mut flashed_points, &dirs) {}
+        while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
 
-        chart
-            .iter_mut()
-            .map(|p| {
-                if p.z >= 10 {
-                    p.z = 0;
-                    1
-                } else {
-                    0
-                }
-            })
-            .sum::<usize>();
-        
-        //println!("{}", chart);
-        
+        for p in chart.iter_mut() {
+            if p.z >= 10 {
+                p.z = 0
+            }
+        }
+
         // if min = max, I guess we're all the same!
         let values = chart.iter().map(|p| p.z).collect::<Vec<usize>>();
         if values.iter().min() == values.iter().max() {
@@ -102,22 +72,17 @@ fn p02(p: &Path) -> Option<usize> {
     Some(step)
 }
 
-fn cycle_step(
-    chart: &mut Chart,
-    flashed_points: &mut Vec<Point3d>,
-    dirs: &Vec<(i32, i32)>,
-) -> Option<usize> {
-    let to_flash: Vec<Point3d> = chart
+fn cycle_step(chart: &mut Chart, flashed_points: &mut Vec<Point3d>) -> Option<usize> {
+    let flashed: usize = chart
         .iter()
-        .filter(|p| !flashed_points.contains(p))
-        .filter(|p| p.z >= 10)
+        .filter(|p| !flashed_points.contains(p) && p.z >= 10)
         .map(|p| *p)
-        .collect::<Vec<Point3d>>();
-
-    let flashed: usize = to_flash
+        .collect::<Vec<Point3d>>() // stops borrow on chart and flashed_points
         .iter()
-        .map(|p| flash_point(chart, p, dirs))
-        .map(|p| flashed_points.push(*p))
+        .map(|p| {
+            flashed_points.push(*p);
+            flash_point(chart, *p);
+        })
         .count();
 
     match flashed {
@@ -126,16 +91,12 @@ fn cycle_step(
     }
 }
 
-// Okay i finally figured out what 'a means. It's saying where it's borrowed from. fun
-fn flash_point<'a>(chart: &mut Chart, p: &'a Point3d, dirs: &Vec<(i32, i32)>) -> &'a Point3d {
-    for (x, y) in dirs.iter() {
+fn flash_point(chart: &mut Chart, p: Point3d) {
+    for (x, y) in DIRS.iter() {
         let p2 = chart.at_pos((p.x as i32 + x) as usize, (p.y as i32 + y) as usize);
         match p2 {
             Some(p2) => p2.z += 1,
             None => (),
         }
     }
-    // returning the same input value so we can just chain it in an iterator (i'm sure there's
-    // better syntax for this
-    p
 }
