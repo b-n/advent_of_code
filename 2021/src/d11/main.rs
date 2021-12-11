@@ -1,4 +1,4 @@
-use crate::d11::{chart::Chart, point3d::Point3d};
+use super::{chart::Chart, point3d::Point3d};
 use crate::utils::file;
 use std::path::Path;
 
