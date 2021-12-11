@@ -43,6 +43,23 @@ pub fn lines_as_vec2d<>(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<char>>>
 }
 
 #[allow(dead_code)]
+pub fn lines_as_vec2d_usize(lines: Lines<BufReader<File>>) -> Option<Vec<Vec<usize>>> {
+    Some(
+        lines
+            .map(|l| line_as_str(l))
+            .map(|l| {
+                l.map(|r| {
+                    r.chars()
+                        .map(|c| (c as usize) - ('0' as usize))
+                        .collect::<Vec<usize>>()
+                })
+            })
+            .flat_map(|x| x)
+            .collect::<Vec<Vec<usize>>>(),
+    )
+}
+
+#[allow(dead_code)]
 pub fn csv_to_vec<T>(s: String) -> Result<Vec<T>, T::Err>
 where
     T: FromStr,
