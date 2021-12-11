@@ -1,4 +1,4 @@
-use crate::types::point3d::Point3d;
+use crate::d11::point3d::Point3d;
 use std::fmt;
 
 pub struct Chart {

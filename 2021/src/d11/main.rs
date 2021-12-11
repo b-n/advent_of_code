@@ -1,4 +1,4 @@
-use crate::types::{chart::Chart, point3d::Point3d};
+use crate::d11::{chart::Chart, point3d::Point3d};
 use crate::utils::file;
 use std::path::Path;
 
