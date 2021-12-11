@@ -33,11 +33,7 @@ fn p01(p: &Path) -> Option<usize> {
         let mut flashed_points: Vec<Point3d> = vec![];
         while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
 
-        total_flashes += chart
-            .iter_mut()
-            .filter(|p| p.z >= 10)
-            .map(|p| p.z = 0)
-            .count();
+        total_flashes += chart.reset(|p| p.z >= 10);
     }
     Some(total_flashes)
 }
@@ -54,11 +50,7 @@ fn p02(p: &Path) -> Option<usize> {
         let mut flashed_points: Vec<Point3d> = vec![];
         while let Some(_) = cycle_step(&mut chart, &mut flashed_points) {}
 
-        for p in chart.iter_mut() {
-            if p.z >= 10 {
-                p.z = 0
-            }
-        }
+        chart.reset(|p| p.z >= 10);
 
         // if min = max, I guess we're all the same!
         let values = chart.iter().map(|p| p.z).collect::<Vec<usize>>();
