@@ -6,7 +6,7 @@ pub fn run() {
     let path = Path::new("./input/11");
 
     println!("Part 1: {}", p01(path).unwrap());
-    //println!("Part 2: {}", p02(path).unwrap());
+    println!("Part 2: {}", p02(path).unwrap());
 }
 
 fn p01(p: &Path) -> Option<usize> {
@@ -52,11 +52,55 @@ fn p01(p: &Path) -> Option<usize> {
     Some(total_flashes)
 }
 
-//fn p02(p: &Path) -> Option<usize> {
-    //let lines = file::read_to_lines(p);
+fn p02(p: &Path) -> Option<usize> {
+    let lines = file::read_to_lines(p);
 
-    //Some(0)
-//}
+    let mut chart = Chart::from_2d_vec(&file::lines_as_vec2d_usize(lines)?);
+
+    //println!("{}", chart);
+    let dirs: Vec<(i32, i32)> = vec![
+        (0, -1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (-1, 1),
+        (-1, 0),
+        (-1, -1),
+    ];
+
+    let mut step: usize = 1; //we start at step 1....
+    loop {
+        chart.inc(1);
+
+        let mut flashed_points: Vec<Point3d> = vec![];
+        while let Some(_) = cycle_step(&mut chart, &mut flashed_points, &dirs) {}
+
+        chart
+            .iter_mut()
+            .map(|p| {
+                if p.z >= 10 {
+                    p.z = 0;
+                    1
+                } else {
+                    0
+                }
+            })
+            .sum::<usize>();
+        
+        //println!("{}", chart);
+        
+        // if min = max, I guess we're all the same!
+        let values = chart.iter().map(|p| p.z).collect::<Vec<usize>>();
+        if values.iter().min() == values.iter().max() {
+            break;
+        }
+
+        step += 1;
+    }
+
+    Some(step)
+}
 
 fn cycle_step(
     chart: &mut Chart,
