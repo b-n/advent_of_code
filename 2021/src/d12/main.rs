@@ -1,4 +1,5 @@
 use super::node::Node;
+use super::node_path::NodePath;
 use crate::utils::file;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -7,7 +8,7 @@ use std::path::Path;
 // - Self-referential objects in rust are not really a thing apparently (I should learn Box<T>)
 //   - But really, it's a graph, there should be an easy way to do this
 // - Read the description of the task better (second task is one cave twice etc)
-// - Just dedupe with hashsets - your algo sucks, so just brute it 
+// - Just dedupe with hashsets - your algo sucks, so just brute it
 //
 // Rust Enjoyment factor [++--------] <-- -2 points, serious, lifetimes are hard when doing linked
 // lists
@@ -22,69 +23,59 @@ pub fn run() {
 fn p01(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
 
-    let start = Node::new(String::from("start"));
-    let end = Node::new(String::from("end"));
-
     let mut node_map: HashMap<String, Node> = HashMap::new();
-    node_map.insert(start.name.clone(), start);
-    node_map.insert(end.name.clone(), end);
 
     for line in lines {
         let str_value = file::line_as_str(line).ok()?;
         populate_node_map(str_value, &mut node_map);
     }
 
-    let mut cache = HashSet::new();
-    let paths = traverse(
-        &String::from("start"),
+    let start_node = node_map.get(&String::from("start"))?;
+    let mut all_paths = HashSet::new();
+    
+    traverse(
+        &start_node,
         &node_map,
+        NodePath::new(vec![start_node.name.clone()]),
         String::from("start"),
-        String::from("start"),
-        &mut cache,
+        &mut all_paths,
     );
 
-    paths
+    Some(all_paths.len())
 }
 
 fn p02(p: &Path) -> Option<usize> {
     let lines = file::read_to_lines(p);
 
-    let start = Node::new(String::from("start"));
-    let end = Node::new(String::from("end"));
-
     let mut node_map: HashMap<String, Node> = HashMap::new();
-    node_map.insert(start.name.clone(), start);
-    node_map.insert(end.name.clone(), end);
 
     for line in lines {
         let str_value = file::line_as_str(line).ok()?;
         populate_node_map(str_value, &mut node_map);
     }
 
-    let mut cache = HashSet::new();
+    let mut all_paths = HashSet::new();
 
-    Some(
-        traverse(
-            &String::from("start"),
-            &node_map,
-            String::from("start"),
-            String::new(),
-            &mut cache,
-        )
-        .unwrap(),
-    )
+    let start_node = node_map.get(&String::from("start"))?;
+    traverse(
+        &start_node,
+        &node_map,
+        NodePath::new(vec![start_node.name.clone()]),
+        String::new(),
+        &mut all_paths,
+    );
+
+    Some(all_paths.len())
 }
 
 fn traverse(
-    from: &String,
+    from: &Node,
     map: &HashMap<String, Node>,
-    travelled_path: String,
+    path: NodePath,
     smol_node: String,
-    cache: &mut HashSet<String>,
-) -> Option<usize> {
-    let node = map.get(from)?;
-
-    let connections = node
+    all_paths: &mut HashSet<NodePath>,
+) {
+    for next_node in from
         .connections
         .iter()
         .map(|c| map.get(c).unwrap())
@@ -92,41 +83,26 @@ fn traverse(
         .filter(|next| {
             if next.is_smol {
                 let allowed_times = if smol_node == next.name { 2 } else { 1 };
-                travelled_path.matches(&next.name).count() < allowed_times
+                path.count_node(next) < allowed_times
             } else {
                 true
             }
         })
-        .collect::<Vec<&Node>>();
+    {
+        let next_path = NodePath::from(&path, next_node);
+        if all_paths.contains(&next_path) {
+            continue;
+        }
 
-    if connections.len() == 0 {
-        Some(0)
-    } else {
-        Some(
-            connections
-                .iter()
-                .map(|next| {
-                    let current_path = String::from(format!("{}->{}", travelled_path, next.name));
-                    if cache.contains(&current_path) {
-                        // Hax. We have duplicate paths, so this just crushes them
-                        0
-                    } else if next.name == String::from("end") {
-                        cache.insert(current_path.clone());
-                        1
-                    } else {
-                        // this isn't obvious, but if we have a smol_node, we need to keep parsing
-                        // If we don't have one, we should branch out and find from that smol_node
-                        traverse(&next.name, map, current_path.clone(), smol_node.clone(), cache).unwrap()
-                            + if smol_node.is_empty() {
-                                traverse(&next.name, map, current_path.clone(), next.name.clone(), cache)
-                                    .unwrap()
-                            } else {
-                                0
-                            }
-                    }
-                })
-                .sum(),
-        )
+        if next_node.is_end {
+            all_paths.insert(next_path);
+            continue;
+        }
+
+        traverse(&next_node, map, next_path.clone(), smol_node.clone(), all_paths);
+        if next_node.is_smol && smol_node.is_empty() {
+            traverse(&next_node, map, next_path.clone(), next_node.name.clone(), all_paths);
+        }
     }
 }
 
