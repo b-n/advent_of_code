@@ -34,7 +34,7 @@ fn p01(p: &Path) -> Option<usize> {
     let mut all_paths = HashSet::new();
     
     traverse(
-        &start_node,
+        &start_node.name,
         &node_map,
         NodePath::new(vec![start_node.name.clone()]),
         String::from("start"),
@@ -58,7 +58,7 @@ fn p02(p: &Path) -> Option<usize> {
 
     let start_node = node_map.get(&String::from("start"))?;
     traverse(
-        &start_node,
+        &start_node.name,
         &node_map,
         NodePath::new(vec![start_node.name.clone()]),
         String::new(),
@@ -69,13 +69,13 @@ fn p02(p: &Path) -> Option<usize> {
 }
 
 fn traverse(
-    from: &Node,
+    from: &String,
     map: &HashMap<String, Node>,
     path: NodePath,
     smol_node: String,
     all_paths: &mut HashSet<NodePath>,
 ) {
-    for next_node in from
+    for next_node in map.get(from).unwrap()
         .connections
         .iter()
         .map(|c| map.get(c).unwrap())
@@ -99,9 +99,9 @@ fn traverse(
             continue;
         }
 
-        traverse(&next_node, map, next_path.clone(), smol_node.clone(), all_paths);
+        traverse(&next_node.name, map, next_path.clone(), smol_node.clone(), all_paths);
         if next_node.is_smol && smol_node.is_empty() {
-            traverse(&next_node, map, next_path.clone(), next_node.name.clone(), all_paths);
+            traverse(&next_node.name, map, next_path.clone(), next_node.name.clone(), all_paths);
         }
     }
 }
