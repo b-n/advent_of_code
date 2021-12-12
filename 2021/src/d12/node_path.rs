@@ -1,7 +1,8 @@
 use super::node::Node;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 
-#[derive(Debug, Clone, Eq, Hash)]
+#[derive(Debug, Clone, Eq)]
 pub struct NodePath {
     pub nodes: Vec<String>,
     hash: String,
@@ -39,5 +40,14 @@ impl fmt::Display for NodePath {
 impl PartialEq for NodePath {
     fn eq(&self, other: &Self) -> bool {
         self.hash == other.hash
+    }
+}
+
+impl Hash for NodePath {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        self.hash.hash(state);
     }
 }
