@@ -26,5 +26,5 @@ fn main() {
     //d09::main::run();
     //d10::main::run();
     //d11::main::run();
-    d12::main::run();
+    d12::main2::run();
 }

@@ -10,7 +10,7 @@ pub struct NodePath {
 
 impl NodePath {
     pub fn new(nodes: Vec<String>) -> Self {
-        let hash = nodes.join(",");
+        let hash = nodes.join("");
         Self { nodes, hash }
     }
 
