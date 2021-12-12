@@ -9,6 +9,7 @@ mod d08;
 mod d09;
 mod d10;
 mod d11;
+mod d12;
 mod utils;
 mod types;
 
@@ -24,5 +25,6 @@ fn main() {
     //d08::main::run();
     //d09::main::run();
     //d10::main::run();
-    d11::main::run();
+    //d11::main::run();
+    d12::main::run();
 }
