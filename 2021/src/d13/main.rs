@@ -21,10 +21,10 @@ fn p01(p: &Path) -> Option<usize> {
 fn p02(p: &Path) -> Option<usize> {
     let (initial_points, folds) = parse_input(p)?;
 
-    let mut result = initial_points;
-    for fold in folds {
-        result = fold_points(&result, fold.0, fold.1)?;
-    }
+    let result = folds.iter()
+        .fold(initial_points, |acc, fold| {
+            fold_points(&acc, fold.0, fold.1).unwrap()
+        });
     print_points(&result);
     Some(0)
 }
