@@ -11,6 +11,13 @@ pub fn run() {
     println!("Part 2: {}", p02(path).unwrap());
 }
 
+#[derive(Clone, Copy)]
+#[repr(u8)]
+enum Axis {
+    Y = b'y',
+    X = b'x',
+}
+
 fn p01(p: &Path) -> Option<usize> {
     let (initial_points, folds) = parse_input(p)?;
     let fold = folds[0];
@@ -46,43 +53,37 @@ fn print_points(input: &HashSet<Point>) -> Option<()> {
     Some(())
 }
 
-fn fold_points(input: &HashSet<Point>, axis: char, pos: usize) -> Option<HashSet<Point>> {
-    match axis {
-        'x' => Some(
-            input
-                .iter()
-                .map(|&p| {
-                    if p.x < pos {
-                        p
-                    } else {
-                        Point {
-                            x: 2 * pos - p.x,
-                            y: p.y,
-                        }
-                    }
-                })
-                .collect(),
-        ),
-        'y' => Some(
-            input
-                .iter()
-                .map(|&p| {
-                    if p.y < pos {
-                        p
-                    } else {
-                        Point {
-                            x: p.x,
-                            y: 2 * pos - p.y,
-                        }
-                    }
-                })
-                .collect(),
-        ),
-        _ => None,
-    }
+fn fold_points(input: &HashSet<Point>, axis: Axis, pos: usize) -> Option<HashSet<Point>> {
+    let attr_reader = |p: Point| -> usize {
+        match axis {
+            Axis::Y => p.y,
+            Axis::X => p.x,
+        }
+    };
+
+    let attr_writer = |p: Point| -> (usize, usize) {
+        match axis {
+            Axis::Y => (p.x, 2 * pos - p.y),
+            Axis::X => (2 * pos - p.x, p.y),
+        }
+    };
+
+    Some(
+        input
+            .iter()
+            .map(|&p| {
+                if attr_reader(p) < pos {
+                    p
+                } else {
+                    let (x, y) = attr_writer(p);
+                    Point { x, y }
+                }
+            })
+            .collect(),
+    )
 }
 
-fn parse_input(p: &Path) -> Option<(HashSet<Point>, Vec<(char, usize)>)> {
+fn parse_input(p: &Path) -> Option<(HashSet<Point>, Vec<(Axis, usize)>)> {
     let mut file = File::open(p).ok()?;
     let mut buffer = String::new();
     file.read_to_string(&mut buffer).ok()?;
@@ -103,11 +104,14 @@ fn parse_input(p: &Path) -> Option<(HashSet<Point>, Vec<(char, usize)>)> {
         .filter(|&s| s != &"")
         .map(|s| {
             let fold_parts = s.split("=").collect::<Vec<&str>>();
-            let axis = fold_parts[0].chars().nth(11).unwrap();
+            let axis = match fold_parts[0].chars().nth(11).unwrap() {
+                'x' => Axis::X,
+                _ => Axis::Y,
+            };
             let pos = fold_parts[1].parse::<usize>().unwrap();
             (axis, pos)
         })
-        .collect::<Vec<(char, usize)>>();
+        .collect::<Vec<(Axis, usize)>>();
 
     Some((points, folds))
 }
