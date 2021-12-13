@@ -55,14 +55,13 @@ fn fold_points(input: &HashSet<Point>, axis: char, pos: usize) -> Option<HashSet
                     if p.x < pos {
                         p
                     } else {
-                        let new_x = (pos -1) - (p.x - (pos + 1));
                         Point {
-                            x: new_x,
+                            x: 2 * pos - p.x,
                             y: p.y,
                         }
                     }
                 })
-                .collect()
+                .collect(),
         ),
         'y' => Some(
             input
@@ -71,10 +70,9 @@ fn fold_points(input: &HashSet<Point>, axis: char, pos: usize) -> Option<HashSet
                     if p.y < pos {
                         p
                     } else {
-                        let new_y = (pos - 1) - (p.y - (pos + 1));
                         Point {
                             x: p.x,
-                            y: new_y,
+                            y: 2 * pos - p.y,
                         }
                     }
                 })
