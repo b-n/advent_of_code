@@ -1,5 +1,5 @@
-use crate::utils::file;
 use std::collections::{HashMap, HashSet};
+use std::fs;
 use std::path::Path;
 
 // Learnings:
@@ -17,22 +17,24 @@ pub fn run() {
 }
 
 fn p01(p: &Path) -> Option<usize> {
-    let lines = file::read_to_lines(p);
+    let raw_input = fs::read_to_string(p).ok()?;
 
-    let mut node_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut node_map: HashMap<&str, Vec<&str>> = HashMap::new();
 
-    for line in lines {
-        let str_value = file::line_as_str(line).ok()?;
-        populate_node_map(str_value, &mut node_map);
+    for line in raw_input.split("\n") {
+        if line.is_empty() {
+            break;
+        }
+        populate_node_map(&line, &mut node_map);
     }
 
     let mut all_paths = HashSet::new();
-    
+
     traverse(
         &String::from("start"),
         &node_map,
-        String::from("start"),
-        String::from("start"),
+        "start",
+        "start",
         &mut all_paths,
     );
 
@@ -40,13 +42,15 @@ fn p01(p: &Path) -> Option<usize> {
 }
 
 fn p02(p: &Path) -> Option<usize> {
-    let lines = file::read_to_lines(p);
+    let raw_input = fs::read_to_string(p).ok()?;
 
-    let mut node_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut node_map: HashMap<&str, Vec<&str>> = HashMap::new();
 
-    for line in lines {
-        let str_value = file::line_as_str(line).ok()?;
-        populate_node_map(str_value, &mut node_map);
+    for line in raw_input.split("\n") {
+        if line.is_empty() {
+            break;
+        }
+        populate_node_map(&line, &mut node_map);
     }
 
     let mut all_paths = HashSet::new();
@@ -54,8 +58,8 @@ fn p02(p: &Path) -> Option<usize> {
     traverse(
         &String::from("start"),
         &node_map,
-        String::from("start"),
-        String::new(),
+        "start",
+        "",
         &mut all_paths,
     );
 
@@ -63,15 +67,17 @@ fn p02(p: &Path) -> Option<usize> {
 }
 
 fn traverse(
-    from: &String,
-    map: &HashMap<String, Vec<String>>,
-    path: String,
-    smol_node: String,
+    from: &str,
+    map: &HashMap<&str, Vec<&str>>,
+    path: &str,
+    smol_node: &str,
     all_paths: &mut HashSet<String>,
 ) {
-    for next_node in map.get(from).unwrap()
+    for next_node in map
+        .get(from)
+        .unwrap()
         .iter()
-        .filter(|&next| next != "start")
+        .filter(|&next| next != &"start")
         .filter(|&next| {
             if (*next).chars().all(|c| c.is_ascii_lowercase()) {
                 let allowed_times = if &smol_node == next { 2 } else { 1 };
@@ -87,28 +93,34 @@ fn traverse(
             continue;
         }
 
-        if next_node == "end" {
+        if next_node == &"end" {
             all_paths.insert(next_path);
             continue;
         }
 
-        traverse(&next_node, map, next_path.clone(), smol_node.clone(), all_paths);
+        traverse(
+            &next_node,
+            map,
+            next_path.as_str(),
+            smol_node.clone(),
+            all_paths,
+        );
         if smol_node.is_empty() && next_node.chars().all(|c| c.is_ascii_lowercase()) {
-            traverse(&next_node, map, next_path.clone(), next_node.clone(), all_paths);
+            traverse(&next_node, map, next_path.as_str(), next_node, all_paths);
         }
     }
 }
 
-fn populate_node_map(input: String, map: &mut HashMap<String, Vec<String>>) {
+fn populate_node_map<'a>(input: &'a str, map: &mut HashMap<&'a str, Vec<&'a str>>) {
     let (left, right) = node_points(input);
 
-    let left_node = map.entry(left.clone()).or_insert(vec![]);
-    left_node.push(right.clone());
-    let right_node = map.entry(right.clone()).or_insert(vec![]);
-    right_node.push(left.clone());
+    let left_node = map.entry(left).or_insert(vec![]);
+    left_node.push(right);
+    let right_node = map.entry(right).or_insert(vec![]);
+    right_node.push(left);
 }
 
-fn node_points(input: String) -> (String, String) {
-    let parts = input.split("-").collect::<Vec<&str>>();
-    (String::from(parts[0]), String::from(parts[1]))
+fn node_points(input: &str) -> (&str, &str) {
+    let mut parts = input.split("-");
+    (parts.next().unwrap(), parts.next().unwrap())
 }
