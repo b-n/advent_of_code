@@ -7,10 +7,10 @@ use std::path::Path;
 //   checker knows where they came from
 
 pub fn run() {
-    let path = Path::new("./input/14");
+    let path = Path::new("./input/14_example");
 
     println!("Part 1: {}", p01(path).unwrap());
-    //println!("Part 2: {}", p02(path).unwrap());
+    println!("Part 2: {}", p02(path).unwrap());
 }
 
 fn p01(p: &Path) -> Option<usize> {
@@ -18,9 +18,8 @@ fn p01(p: &Path) -> Option<usize> {
     let (initial_points, mutations) = parse_input(&raw_input)?;
 
     let mut next: String = String::from(initial_points);
-    for i in 0..10 {
+    for _ in 0..10 {
         next = step(&next, &mutations)?;
-        println!("{}", i);
     }
 
     let char_occurences = next.chars().fold(HashMap::new(), |mut acc, c| {
@@ -31,11 +30,37 @@ fn p01(p: &Path) -> Option<usize> {
     Some(char_occurences.values().max()? - char_occurences.values().min()?)
 }
 
-//fn p02(p: &Path) -> Option<usize> {
-    //let (initial_points, folds) = parse_input(p)?;
+fn p02(p: &Path) -> Option<usize> {
+    let raw_input = fs::read_to_string(p).ok()?;
+    let (initial_points, raw_mutations) = parse_input(&raw_input)?;
 
-    //Some(0)
-//}
+    let next_effect_mutations = raw_mutations
+        .iter()
+        .map(|(&k, v)| {
+            (
+                String::from(k),
+                vec![format!("{}{}", &k[0..=0], v), format!("{}{}", v, &k[1..=1])],
+            )
+        })
+        .collect::<HashMap<String, Vec<String>>>();
+
+    let mut pair_counts = (0..(initial_points.len() - 1))
+        .map(|i| (&initial_points[i..=(i + 1)], 1))
+        .collect::<HashMap<&str, usize>>();
+
+    let steps = 10;
+    for _ in 0..steps {
+        pair_counts = better_step(&mut pair_counts, &next_effect_mutations)?;
+    }
+
+    let mut char_occurences = HashMap::new();
+    for (k, v) in pair_counts.iter() {
+        *char_occurences.entry(&k[0..=0]).or_insert(0) += v;
+    }
+    *char_occurences.get_mut(&initial_points[initial_points.len()-1..initial_points.len()])? += 1;
+
+    Some((char_occurences.values().max()? - char_occurences.values().min()?) / 2)
+}
 
 fn step<'a>(input: &'a str, mutations: &HashMap<&str, &str>) -> Option<String> {
     let mut next_input = format!("{}", &input[0..1]);
@@ -45,6 +70,21 @@ fn step<'a>(input: &'a str, mutations: &HashMap<&str, &str>) -> Option<String> {
     }
 
     Some(next_input)
+}
+
+fn better_step<'a>(
+    pair_counts: &mut HashMap<&'a str, usize>,
+    effect_mutations: &'a HashMap<String, Vec<String>>,
+) -> Option<HashMap<&'a str, usize>> {
+    let mut new_counts: HashMap<&'a str, usize> = pair_counts.clone();
+    for (pair, count) in pair_counts.iter() {
+        for new_pair in effect_mutations.get(*pair)?.iter() {
+            *new_counts.entry(new_pair).or_insert(0) += count;
+        }
+        *new_counts.get_mut(pair)? -= count;
+    }
+
+    Some(new_counts)
 }
 
 fn parse_input(input: &str) -> Option<(&str, HashMap<&str, &str>)> {
