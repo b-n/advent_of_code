@@ -78,14 +78,11 @@ fn better_step<'a>(
     pair_counts: &mut HashMap<&'a str, usize>,
     effect_mutations: &'a HashMap<String, Vec<String>>,
 ) -> Option<HashMap<&'a str, usize>> {
-    let mut new_counts: HashMap<&'a str, usize> = pair_counts.clone();
+    let mut new_counts: HashMap<&'a str, usize> = HashMap::new();
     for (pair, count) in pair_counts.iter() {
-        // each pair creates `count` new elements of the net_mutations
         for new_pair in effect_mutations.get(*pair)?.iter() {
             *new_counts.entry(new_pair).or_insert(0) += count;
         }
-        // but it also removes itself `count` times from the counts
-        *new_counts.get_mut(pair)? -= count;
     }
 
     Some(new_counts)
