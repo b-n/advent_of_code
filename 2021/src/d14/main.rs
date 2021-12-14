@@ -7,18 +7,18 @@ use std::path::Path;
 //   checker knows where they came from
 
 pub fn run() {
-    let path = Path::new("./input/14_example");
+    let path = Path::new("./input/14");
 
-    println!("Part 1: {}", p01(path).unwrap());
-    println!("Part 2: {}", p02(path).unwrap());
+    println!("Part 1: {}", p01(path, 10).unwrap());
+    println!("Part 2: {}", p02(path, 40).unwrap());
 }
 
-fn p01(p: &Path) -> Option<usize> {
+fn p01(p: &Path, steps: usize) -> Option<usize> {
     let raw_input = fs::read_to_string(p).ok()?;
     let (initial_points, mutations) = parse_input(&raw_input)?;
 
     let mut next: String = String::from(initial_points);
-    for _ in 0..10 {
+    for _ in 0..steps {
         next = step(&next, &mutations)?;
     }
 
@@ -30,11 +30,11 @@ fn p01(p: &Path) -> Option<usize> {
     Some(char_occurences.values().max()? - char_occurences.values().min()?)
 }
 
-fn p02(p: &Path) -> Option<usize> {
+fn p02(p: &Path, steps: usize) -> Option<usize> {
     let raw_input = fs::read_to_string(p).ok()?;
     let (initial_points, raw_mutations) = parse_input(&raw_input)?;
 
-    let next_effect_mutations = raw_mutations
+    let net_effect_mutations = raw_mutations
         .iter()
         .map(|(&k, v)| {
             (
@@ -44,20 +44,22 @@ fn p02(p: &Path) -> Option<usize> {
         })
         .collect::<HashMap<String, Vec<String>>>();
 
-    let mut pair_counts = (0..(initial_points.len() - 1))
-        .map(|i| (&initial_points[i..=(i + 1)], 1))
-        .collect::<HashMap<&str, usize>>();
+    // this caused me hassles, I originally didn't count duplicates in the input. whoops!
+    let mut pair_counts = (0..(initial_points.len() - 1)).fold(HashMap::new(), |mut acc, i| {
+        let pair = &initial_points[i..=(i + 1)];
+        *acc.entry(pair).or_insert(0) += 1;
+        acc
+    });
 
-    let steps = 10;
     for _ in 0..steps {
-        pair_counts = better_step(&mut pair_counts, &next_effect_mutations)?;
+        pair_counts = better_step(&mut pair_counts, &net_effect_mutations)?;
     }
 
     let mut char_occurences = HashMap::new();
     for (k, v) in pair_counts.iter() {
         *char_occurences.entry(&k[0..=0]).or_insert(0) += v;
+        *char_occurences.entry(&k[1..=1]).or_insert(0) += v;
     }
-    *char_occurences.get_mut(&initial_points[initial_points.len()-1..initial_points.len()])? += 1;
 
     Some((char_occurences.values().max()? - char_occurences.values().min()?) / 2)
 }
@@ -78,9 +80,11 @@ fn better_step<'a>(
 ) -> Option<HashMap<&'a str, usize>> {
     let mut new_counts: HashMap<&'a str, usize> = pair_counts.clone();
     for (pair, count) in pair_counts.iter() {
+        // each pair creates `count` new elements of the net_mutations
         for new_pair in effect_mutations.get(*pair)?.iter() {
             *new_counts.entry(new_pair).or_insert(0) += count;
         }
+        // but it also removes itself `count` times from the counts
         *new_counts.get_mut(pair)? -= count;
     }
 
