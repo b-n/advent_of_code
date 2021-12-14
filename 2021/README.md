@@ -11,5 +11,5 @@ What you can expect in this folder:
 - Budget and bad code on the first days
 - Better, but still bad code on the latter days
 - Shortcuts, hacks, things I wouldn't do in production
-- Tests? Hah... Yes I should do TDD, but that's next year. Check out [trekdemo](https://github.com/trekdemo)
+- Tests? Hah... Yes I should do TDD, but that's next year. Check out [@trekdemo](https://github.com/trekdemo/advent-of-code)
   if you want to see someone doing TDD like a true champ
