@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -14,6 +16,27 @@ const CARDINAL_DIRS: &'static [(i32, i32)] = &[(-1, 0), (0, 1), (1, 0), (0, -1)]
 type Point = (usize, usize);
 type Cost = usize;
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+struct SearchPosition {
+    point: Point,
+    cost: Cost,
+}
+
+impl Ord for SearchPosition {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| self.point.cmp(&other.point))
+    }
+}
+
+impl PartialOrd for SearchPosition {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 fn p01(p: &Path) -> Option<usize> {
     let raw_input = fs::read_to_string(p).ok()?;
 
@@ -21,36 +44,37 @@ fn p01(p: &Path) -> Option<usize> {
 
     let grid_max_y = grid.keys().map(|(y, _)| y).max()?;
     let grid_max_x = grid.keys().map(|(_, x)| x).max()?;
+    let start = &(0, 0);
+    let end = &(*grid_max_y, *grid_max_x);
 
     let in_bounds = |(y, x): &Point| *x <= *grid_max_x && *y <= *grid_max_y;
 
     let mut point_cost: HashMap<Point, Cost> = HashMap::new();
-    point_cost.insert((0, 0), 0);
+    point_cost.insert(*start, 0);
 
-    let mut next: HashMap<Point, Cost> = next_points(&(0, 0), 0, &grid, in_bounds, &mut point_cost);
+    let mut search_items: BinaryHeap<SearchPosition> = BinaryHeap::new();
+    search_items.push(SearchPosition {
+        point: *start,
+        cost: 0,
+    });
 
-    println!("{}[2J", 27 as char);
-    while next.len() > 0 {
-        let mut sorted_points: Vec<(Point, Cost)> =
-            next.iter().map(|(p, cost)| (*p, *cost)).collect();
-        sorted_points.sort_by(|a, b| a.1.cmp(&b.1));
+    //println!("{}[2J", 27 as char);
+    while search_items.len() > 0 {
+        let next = search_items.pop()?;
+        if &next.point == end {
+            break;
+        }
 
-        let (point, cost) = sorted_points.first()?;
-        next.remove(point);
+        //print_pos(&next.point, &point_cost);
 
-        print_pos(point, &point_cost);
-
-        for (point, cost) in next_points(point, *cost, &grid, in_bounds, &mut point_cost) {
-            point_cost.insert(point, cost);
-
-            if !next.contains_key(&point) || next.get(&point)? > &cost {
-                next.insert(point, cost);
+        for (point, cost) in next_points(&next.point, next.cost, &grid, in_bounds, &mut point_cost)
+        {
+            if !point_cost.contains_key(&point) || &cost < point_cost.get(&point)? {
+                point_cost.insert(point, cost);
+                search_items.push(SearchPosition { point, cost })
             }
         }
     }
-
-    let start = &(0, 0);
-    let end = &(*grid_max_y, *grid_max_x);
 
     Some(*point_cost.get(end)? - *point_cost.get(start)?)
 }
@@ -80,50 +104,37 @@ fn p02(p: &Path) -> Option<usize> {
 
     let grid_max_y = grid.keys().map(|(y, _)| y).max()?;
     let grid_max_x = grid.keys().map(|(_, x)| x).max()?;
+    let start = &(0, 0);
+    let end = &(*grid_max_y, *grid_max_x);
 
     let in_bounds = |(y, x): &Point| *x <= *grid_max_x && *y <= *grid_max_y;
 
     let mut point_cost: HashMap<Point, Cost> = HashMap::new();
-    point_cost.insert((0, 0), 0);
+    point_cost.insert(*start, 0);
 
-    let mut next: HashMap<Point, Cost> = next_points(&(0, 0), 0, &grid, in_bounds, &mut point_cost);
-    
-    //let f_factor: usize = 10;
-    let f_score = |p: &Point, cost: Cost| {
-        // A failed attempt at euclidean distance
-        //let y = grid_max_y - p.0;
-        //let x = grid_max_x - p.1;
-        //((y * y * 1000 + x * x * 1000) as f64).sqrt() as usize + cost * f_factor
-        cost
-    };
+    let mut search_items: BinaryHeap<SearchPosition> = BinaryHeap::new();
+    search_items.push(SearchPosition {
+        point: *start,
+        cost: 0,
+    });
 
-    println!("{}[2J", 27 as char);
-    let end = &(*grid_max_y, *grid_max_x);
-    while next.len() > 0 {
-        if point_cost.contains_key(end) {
+    //println!("{}[2J", 27 as char);
+    while search_items.len() > 0 {
+        let next = search_items.pop()?;
+        if &next.point == end {
             break;
         }
-        let mut sorted_points: Vec<(Point, Cost, Cost)> =
-            next.iter().map(|(p, cost)| {
-                (*p, *cost, f_score(p, *cost))
-            }).collect();
-        sorted_points.sort_by(|a, b| a.2.cmp(&b.2));
 
-        let (point, cost, _) = sorted_points.first()?;
-        next.remove(point);
+        //print_pos(&next.point, &point_cost);
 
-        print_pos(point, &point_cost);
-
-        for (point, cost) in next_points(point, *cost, &grid, in_bounds, &mut point_cost) {
-            point_cost.insert(point, cost);
-
-            if !next.contains_key(&point) || next.get(&point)? > &cost {
-                next.insert(point, cost);
+        for (point, cost) in next_points(&next.point, next.cost, &grid, in_bounds, &mut point_cost)
+        {
+            if !point_cost.contains_key(&point) || &cost < point_cost.get(&point)? {
+                point_cost.insert(point, cost);
+                search_items.push(SearchPosition { point, cost })
             }
         }
     }
-
-    let start = &(0, 0);
 
     Some(*point_cost.get(end)? - *point_cost.get(start)?)
 }
