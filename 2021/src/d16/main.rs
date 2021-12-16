@@ -21,10 +21,20 @@ impl Packet {
         self.version + self.children.iter().map(|x| x.get_version()).sum::<u64>()
     }
 
+    fn values<'a>(&'a self) -> impl Iterator<Item = u64> + 'a {
+        self.children.iter().map(|x| x.value())
+    }
+
     fn value(&self) -> u64 {
         match self.t {
-            0 => self.children.iter().map(|x| x.value()).sum::<u64>(),
+            0 => self.values().sum::<u64>(),
+            1 => self.values().product::<u64>(),
+            2 => self.values().min().unwrap(),
+            3 => self.values().max().unwrap(),
             4 => self.value,
+            5 => if self.children[0].value() > self.children[1].value() { 1 } else { 0 },
+            6 => if self.children[0].value() < self.children[1].value() { 1 } else { 0 },
+            7 => if self.children[0].value() == self.children[1].value() { 1 } else { 0 },
             _ => 0,
         }
     }
