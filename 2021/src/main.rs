@@ -14,6 +14,7 @@ mod d13;
 mod d14;
 mod d15;
 mod d16;
+mod d17;
 mod utils;
 mod types;
 
@@ -34,5 +35,6 @@ fn main() {
     //d13::main::run();
     //d14::main::run();
     //d15::main::run();
-    d16::main::run();
+    //d16::main::run();
+    d17::main::run();
 }
