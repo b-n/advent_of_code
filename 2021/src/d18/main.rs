@@ -5,14 +5,19 @@ use std::str::FromStr;
 use std::collections::HashMap;
 
 // Learnings
+// - AoC is hard to read. Those rules man
+// - Structs are pretty cool
+// - I like recursion, but I also don't like recursion
+// - I should learn other ways to solve these kinds of problems
+// - Rust doesn't have optional things, but it does have HashMaps. Pretty hacky, shrug
 //
-// Rust Enjoyment Factor
+// Rust Enjoyment Factor [+++++-----]
 
 pub fn run() {
-    let path = Path::new("./input/18_smol_example");
+    let path = Path::new("./input/18");
 
     println!("Part 1: {}", p01(path).unwrap());
-    //println!("Part 2: {}", p02(path).unwrap());
+    println!("Part 2: {}", p02(path).unwrap());
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
@@ -164,19 +169,21 @@ impl Snail {
         Some(true)
     }
 
-    pub fn explode(&mut self) -> Option<(bool, (usize, usize))> {
+    pub fn explode(&mut self) -> Option<(bool, bool, (usize, usize))> {
         if !self.has(&Side::Left) && !self.has(&Side::Right) && self.depth >= 4 {
             let res = self.values;
             self.values = (0, 0);
-            return Some((true, res));
+            return Some((true, false, res));
         }
 
         if self.has(&Side::Left) {
             let res = self.get_mut(&Side::Left)?.explode()?;
-            let mut values = res.1;
+            let mut values = res.2;
 
             if res.0 {
-                self.prune(&Side::Left)?;
+                if !res.1 {
+                    self.prune(&Side::Left)?;
+                }
                 if values.1 > 0 {
                     if !self.has(&Side::Right) {
                         self.values.1 += values.1;
@@ -185,16 +192,18 @@ impl Snail {
                         values.1 = self.get_mut(&Side::Right)?.add(values.1, &Side::Left)?;
                     } 
                 }
-                return Some((res.0, values))
+                return Some((res.0, true, values))
             }
         }
 
         if self.has(&Side::Right) {
             let res = self.get_mut(&Side::Right)?.explode()?;
-            let mut values = res.1;
+            let mut values = res.2;
 
             if res.0 {
-                self.prune(&Side::Right)?;
+                if !res.1 {
+                    self.prune(&Side::Right)?;
+                }
                 if values.0 > 0 {
                     if !self.has(&Side::Left) {
                         self.values.0 += values.0;
@@ -203,11 +212,11 @@ impl Snail {
                         values.0 = self.get_mut(&Side::Left)?.add(values.0, &Side::Right)?;
                     } 
                 }
-                return Some((res.0, values)) 
+                return Some((res.0, true, values)) 
             }
         }
 
-        Some((false, (0,0)))
+        Some((false, true, (0,0)))
     }
 
     pub fn split(&mut self) -> Option<bool> {
@@ -259,8 +268,21 @@ impl Snail {
 
         Some(left + right)
     }
-}
 
+    pub fn reduce(&mut self) -> Option<bool> {
+        self.set_depth(0);
+        let mut changed = true;
+        while changed {
+            let (exploded, _, _) = self.explode()?;
+            changed = exploded;
+            if !changed {
+                let split = self.split()?;
+                changed = split;
+            }
+        }
+        Some(true)
+    }
+}
 
 fn p01(p: &Path) -> Option<usize> {
     let raw_input = fs::read_to_string(p).ok()?;
@@ -278,25 +300,38 @@ fn p01(p: &Path) -> Option<usize> {
 
     for i in 1..snails.len() {
         combined_snail = Snail::combine(&combined_snail, &snails[i].clone());
-        combined_snail.set_depth(0);
-        let mut changed = true;
-        while changed {
-            let (exploded, _) = combined_snail.explode()?;
-            changed = exploded;
-            if changed {
-                //println!("exploded");
-            }
-            if !changed {
-                let split = combined_snail.split()?;
-                changed = split;
-                if changed {
-                    //println!("split");
-                }
-            }
-        }
-        println!("{}", combined_snail);
+        combined_snail.reduce()?;
     }
-    //println!("{}", combined_snail);
 
     Some(combined_snail.magnitude()?)
+}
+
+fn p02(p: &Path) -> Option<usize> {
+    let raw_input = fs::read_to_string(p).ok()?;
+
+    let snails = raw_input.split("\n")
+        .filter(|x| !x.is_empty())
+        .map(|x| {
+            let mut snail = x.parse::<Snail>().unwrap();
+            snail.set_depth(0);
+            snail
+        })
+        .collect::<Vec<Snail>>();
+
+    let mut max = 0;
+    for i in 0..snails.len() {
+        for j in 0..snails.len() {
+            if i == j {
+                continue;
+            }
+            let mut combined = Snail::combine(&snails[i], &snails[j]);
+            combined.reduce()?;
+            let magnitude = combined.magnitude()?;
+            if magnitude > max {
+                max = magnitude;
+            }
+        }
+    }
+
+    Some(max)
 }
