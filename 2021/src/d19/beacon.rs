@@ -1,10 +1,39 @@
 use std::str::FromStr;
 
+#[allow(dead_code)]
+pub enum Plane {
+    XY,
+    YZ,
+    XZ,
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Beacon {
     pub x: i64,
     pub y: i64,
     pub z: i64,
+}
+
+impl Beacon {
+    pub fn rotate(&mut self, plane: &Plane) {
+        match plane {
+            Plane::XY => {
+                let newx = -1 * self.y;
+                self.y = self.x;
+                self.x = newx;
+            },
+            Plane::YZ => {
+                let newy = -1 * self.z;
+                self.z = self.y;
+                self.y = newy;
+            },
+            Plane::XZ => {
+                let newz = -1 * self.x;
+                self.x = self.z;
+                self.z = newz;
+            },
+        }
+    }
 }
 
 impl FromStr for Beacon {
