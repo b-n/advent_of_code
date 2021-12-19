@@ -34,6 +34,11 @@ impl Beacon {
             },
         }
     }
+
+    pub fn manhattan(&self, other: Self) -> Option<i64> {
+        let out = other - *self;
+        Some(out.x.abs() + out.y.abs() + out.z.abs())
+    }
 }
 
 impl FromStr for Beacon {
@@ -57,6 +62,17 @@ impl std::ops::Sub for Beacon {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
+        }
+    }
+}
+
+impl std::ops::Add for Beacon {
+    type Output = Self;
+    fn add(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
         }
     }
 }

@@ -1,15 +1,17 @@
 use std::str::FromStr;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use super::beacon::{Beacon, Plane, Plane::*};
 
 #[derive(Debug)]
 pub struct Scanner {
-    pub name: String,
+    pub id: usize,
     beacons: Vec<Beacon>,
-    vectors: HashSet<Beacon>,
+    pub vectors: HashMap<Beacon, Beacon>,
     rotation: usize,
-    pub matches: Vec<String>,
+    pub matches: Vec<usize>,
     can_rotate: bool,
+    pub center: Beacon,
+    pub has_center: bool,
 }
 
 impl FromStr for Scanner {
@@ -18,29 +20,37 @@ impl FromStr for Scanner {
         let mut parts = input.split("\n")
             .filter(|x| !x.is_empty());
 
-        let name = String::from(parts.next().unwrap());
+        let title = parts.next().unwrap()[12..15].split(" ").next().unwrap();
+        let id = title.parse::<usize>().unwrap();
 
         let beacons = parts
             .filter(|x| !x.is_empty())
             .map(|x| x.parse::<Beacon>().unwrap())
             .collect::<Vec<Beacon>>();
 
-        Ok(Self::new(name, beacons))
+        Ok(Self::new(id, beacons))
     }
 }
 
 impl Scanner {
-    fn new(name: String, beacons: Vec<Beacon>) -> Self {
+    fn new(id: usize, beacons: Vec<Beacon>) -> Self {
         let mut res = Self {
-            name,
+            id,
             beacons,
-            vectors: HashSet::new(),
+            vectors: HashMap::new(),
             rotation: 0,
             matches: vec![],
             can_rotate: true,
+            center: Beacon { x: 0, y: 0, z: 0 },
+            has_center: false
         };
         res.calculate_vectors();
         res
+    }
+
+    pub fn set_center(&mut self, center: Beacon) {
+        self.center = center;
+        self.has_center = true;
     }
 
     fn calculate_vectors(&mut self) {
@@ -48,14 +58,21 @@ impl Scanner {
         for i in 0..self.beacons.len() {
             for j in 0..self.beacons.len() {
                 if i != j {
-                    self.vectors.insert(self.beacons[i]-self.beacons[j]);
+                    let b1 = self.beacons[i];
+                    let b2 = self.beacons[j];
+                    self.vectors.insert(b1 - b2, b1);
                 }
             }
         }
     }
+
+    pub fn matching_vectors(&self, other: &Self) -> HashSet<Beacon> {
+        &self.vectors.keys().cloned().collect::<HashSet<Beacon>>() &
+            &other.vectors.keys().cloned().collect::<HashSet<Beacon>>()
+    }
     
-    pub fn has_match(&mut self, other: &Self) -> Option<bool> {
-        Some((&self.vectors & &other.vectors).len() / 2 >= 12)
+    pub fn has_match(&self, other: &Self) -> Option<bool> {
+        Some(self.matching_vectors(other).len() / 2 >= 12)
     }
 
     fn rotate_beacons(&mut self, plane: &Plane) {
@@ -63,6 +80,12 @@ impl Scanner {
             b.rotate(plane);
         }
     } 
+
+    pub fn beacons(&self) -> HashSet<Beacon> {
+        self.beacons.iter()
+            .map(|x| *x + self.center)
+            .collect()
+    }
 
     pub fn rotate(&mut self) -> Option<()> {
         if !self.can_rotate {
@@ -92,8 +115,8 @@ impl Scanner {
         Some(())
     }
 
-    pub fn add_matches(&mut self, name: &String) {
-        self.matches.push(name.clone());
+    pub fn add_matches(&mut self, id: usize) {
+        self.matches.push(id);
     }
 
     pub fn stop_rotation(&mut self) {
