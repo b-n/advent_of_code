@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Beacon {
     pub x: i64,
     pub y: i64,
@@ -17,5 +17,17 @@ impl FromStr for Beacon {
             y: parts.next().unwrap(),
             z: parts.next().unwrap(),
         })
+    }
+}
+
+impl std::ops::Sub for Beacon {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
     }
 }
