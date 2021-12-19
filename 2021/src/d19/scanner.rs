@@ -67,8 +67,10 @@ impl Scanner {
     }
 
     pub fn matching_vectors(&self, other: &Self) -> HashSet<Beacon> {
-        &self.vectors.keys().cloned().collect::<HashSet<Beacon>>() &
-            &other.vectors.keys().cloned().collect::<HashSet<Beacon>>()
+        self.vectors.keys()
+            .filter(|k| other.vectors.contains_key(k))
+            .map(|x| *x)
+            .collect()
     }
     
     pub fn has_match(&self, other: &Self) -> Option<bool> {
