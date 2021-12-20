@@ -42,5 +42,5 @@ fn main() {
     //d17::main::run();
     //d18::main::run();
     //d19::main::run();
-    d20::main::run();
+    d20::speed::run();
 }
