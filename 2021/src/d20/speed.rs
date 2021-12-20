@@ -59,37 +59,29 @@ impl Grid {
 
         for (y, x) in to_eval {
             let mut pos: usize = 0;
-            for y2 in -1..=1 {
-                for x2 in -1..=1 {
-                    pos <<= 1;
-                    let to_check = &(y + y2, x + x2);
+            for i in 0..9 {
+                pos <<= 1;
+                let to_check = &(y - 1 + i / 3, x - 1 + i % 3);
 
-                    let current = if self.points.contains_key(to_check) {
-                        *self.points.get(to_check)?
-                    } else {
-                        new_infinite_points
-                    };
+                let current = match self.points.get(to_check) {
+                    Some(value) => value,
+                    None => &new_infinite_points,
+                };
 
-                    let is_flipped = flipped.contains(to_check);
-                    
-                    if current ^ is_flipped {
-                        pos |= 1
-                    }
+                if match (flipped.get(to_check), current) {
+                    (Some(_), false) => true,
+                    (None, true) => true,
+                    _ => false,
+                } {
+                    pos |= 1
                 }
             }
 
             let next = &dict[pos..=pos] == "#";
-            if self.points.contains_key(&(y, x)) {
-                let g = self.points.get_mut(&(y, x))?;
-                if *g != next {
-                    flipped.insert((y, x));
-                }
-                *g = next;
-            } else {
-                if next != new_infinite_points {
-                    flipped.insert((y, x));
-                }
-                self.points.insert((y, x), next);
+            let current = self.points.entry((y, x)).or_insert(new_infinite_points);
+            if &next != current {
+                flipped.insert((y, x));
+                *current = next;
             }
         }
         self.step += 1;
@@ -100,7 +92,7 @@ impl Grid {
     fn print(&self) {
         for y in self.extent_y.0..self.extent_y.1 {
             for x in self.extent_x.0..self.extent_x.1 {
-                if *self.points.get(&(y,x)).unwrap() {
+                if *self.points.get(&(y, x)).unwrap() {
                     print!("#");
                 } else {
                     print!(".");
