@@ -17,6 +17,7 @@ mod d16;
 mod d17;
 mod d18;
 mod d19;
+mod d20;
 mod utils;
 mod types;
 
@@ -40,5 +41,6 @@ fn main() {
     //d16::main::run();
     //d17::main::run();
     //d18::main::run();
-    d19::main::run();
+    //d19::main::run();
+    d20::main::run();
 }
