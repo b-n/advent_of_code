@@ -55,21 +55,7 @@ fn p01(p1_start: usize, p2_start: usize) -> Option<usize> {
 
 #[derive(Hash, Eq, PartialEq, Debug)]
 struct Universe {
-    p1_pos: usize,
-    p1_points: usize,
-    p2_pos: usize,
-    p2_points: usize,
-}
-
-impl Universe {
-    fn new(p1_pos: usize, p1_points: usize, p2_pos: usize, p2_points: usize) -> Self {
-        Self {
-            p1_pos,
-            p1_points,
-            p2_pos,
-            p2_points,
-        }
-    }
+    players: Vec<(usize, usize)>,
 }
 
 fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
@@ -84,39 +70,33 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
             acc
         });
 
+    let start_players = vec![
+        (p1_start - 1, 0),
+        (p2_start - 1, 0)
+    ];
+
     let mut wins: HashMap<usize, usize> = HashMap::new();
 
     let mut universum: HashMap<Universe, usize> = HashMap::new();
-    universum.insert(Universe::new(p1_start - 1, 0, p2_start - 1, 0), 1);
+    universum.insert(Universe { players: start_players }, 1);
 
     let mut turn = 0;
     while universum.len() > 0 {
+        let player = turn % 2;
         let mut next_universes = HashMap::new();
 
         for (universe, i) in universum.iter() {
             for (m, j) in possible_movements.iter() {
-                if turn % 2 == 0 {
-                    let new_pos = (universe.p1_pos + m) % 10;
-                    let new_score = universe.p1_points + new_pos + 1;
+                let mut players = universe.players.clone();
 
-                    if new_score >= 21 {
-                        *wins.entry(0).or_insert(0) += i * j;
-                    } else {
-                        let next =
-                            Universe::new(new_pos, new_score, universe.p2_pos, universe.p2_points);
-                        *next_universes.entry(next).or_insert(0) += i * j;
-                    }
+                let new_pos = (players[player].0 + m) % 10;
+                let new_score = players[player].1 + new_pos + 1;
+
+                if new_score >= 21 {
+                    *wins.entry(player).or_insert(0) += i * j;
                 } else {
-                    let new_pos = (universe.p2_pos + m) % 10;
-                    let new_score = universe.p2_points + new_pos + 1;
-
-                    if new_score >= 21 {
-                        *wins.entry(1).or_insert(0) += i * j;
-                    } else {
-                        let next =
-                            Universe::new(universe.p1_pos, universe.p1_points, new_pos, new_score);
-                        *next_universes.entry(next).or_insert(0) += i * j;
-                    }
+                    players[player] = (new_pos, new_score);
+                    *next_universes.entry(Universe { players }).or_insert(0) += i * j;
                 }
             }
         }
