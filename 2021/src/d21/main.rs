@@ -49,7 +49,6 @@ fn p01(p1_start: usize, p2_start: usize) -> Option<usize> {
     if loser >= 1000 {
         loser = players[1].0;
     }
-    println!("{} {}", loser, die.rolls);
 
     Some(die.rolls * loser)
 }
