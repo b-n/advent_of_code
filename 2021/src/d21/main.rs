@@ -1,9 +1,10 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub fn run() {
-    //println!("Part 1: {}", p01(7, 3).unwrap());
     //println!("Part 1: {}", p01(4, 8).unwrap());
-    println!("Part 1: {}", p02(4, 8).unwrap());
+    println!("Part 1: {}", p01(7, 3).unwrap());
+    //println!("Part 2: {}", p02(4, 8).unwrap());
+    println!("Part 2: {}", p02(7, 3).unwrap());
 }
 
 struct Die {
@@ -53,7 +54,7 @@ fn p01(p1_start: usize, p2_start: usize) -> Option<usize> {
     Some(die.rolls * loser)
 }
 
-#[derive(Hash, Eq, PartialEq, Clone, Copy, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 struct Universe {
     p1_pos: usize,
     p1_points: usize,
@@ -84,8 +85,6 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
             acc
         });
 
-    println!("{:?}", possible_movements);
-
     let mut wins: HashMap<usize, usize> = HashMap::new();
 
     let mut universum: HashMap<Universe, usize> = HashMap::new();
@@ -94,18 +93,18 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
     let mut turn = 0;
     while universum.len() > 0 {
         let mut next_universes = HashMap::new();
-        println!("{} {}", turn % 2, universum.len());
 
         for (universe, i) in universum.iter() {
             for (m, j) in possible_movements.iter() {
-                 if turn % 2 == 0 {
+                if turn % 2 == 0 {
                     let new_pos = (universe.p1_pos + m) % 10;
                     let new_score = universe.p1_points + new_pos + 1;
 
                     if new_score >= 21 {
-                        *wins.entry(0).or_insert(0) += i;
+                        *wins.entry(0).or_insert(0) += i * j;
                     } else {
-                        let next = Universe::new(new_pos, new_score, universe.p2_pos, universe.p2_points);
+                        let next =
+                            Universe::new(new_pos, new_score, universe.p2_pos, universe.p2_points);
                         *next_universes.entry(next).or_insert(0) += i * j;
                     }
                 } else {
@@ -113,9 +112,10 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
                     let new_score = universe.p2_points + new_pos + 1;
 
                     if new_score >= 21 {
-                        *wins.entry(1).or_insert(0) += i;
+                        *wins.entry(1).or_insert(0) += i * j;
                     } else {
-                        let next = Universe::new(universe.p1_pos, universe.p1_points, new_pos, new_score);
+                        let next =
+                            Universe::new(universe.p1_pos, universe.p1_points, new_pos, new_score);
                         *next_universes.entry(next).or_insert(0) += i * j;
                     }
                 }
@@ -125,8 +125,11 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
         turn += 1;
     }
 
-    println!("{}", turn);
-    println!("{:?}", wins);
-
-    Some(0)
+    let p1_wins = *wins.get(&0)?;
+    let p2_wins = *wins.get(&1)?;
+    if p1_wins > p2_wins {
+        Some(p1_wins)
+    } else {
+        Some(p2_wins)
+    }
 }
