@@ -94,6 +94,7 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
     let mut turn = 0;
     while universum.len() > 0 {
         let mut next_universes = HashMap::new();
+        println!("{} {}", turn % 2, universum.len());
 
         for (universe, i) in universum.iter() {
             for (m, j) in possible_movements.iter() {
@@ -125,48 +126,6 @@ fn p02(p1_start: usize, p2_start: usize) -> Option<usize> {
     }
 
     println!("{}", turn);
-    //loop {
-        //// hacky way to pop a stack (rust workarounds)
-        //let next_universe = to_check.iter().next();
-        //if next_universe == None {
-            //break;
-        //}
-        //let universe = next_universe.unwrap().clone();
-        //to_check.remove(&universe);
-        ////println!("{}", to_check.len());
-
-        //// how many of these universes do we have?
-        //let current_count = *universum.get(&universe)?;
-
-        //// for our universe, let's check all rolls we could do
-        //for (m, i) in possible_movements.iter() {
-            //if universe.turn == 0 {
-                //let new_pos = (universe.p1_pos + m) % 10;
-                //let new_score = universe.p1_points + new_pos + 1;
-
-                //if new_score >= 21 {
-                    //*wins.entry(0).or_insert(0) += current_count;
-                //} else {
-                    //let next =
-                        //Universe::new(new_pos, new_score, universe.p2_pos, universe.p2_points, 1);
-                    //*universum.entry(next).or_insert(0) += i;
-                    //to_check.insert(next.clone());
-                //}
-            //} else {
-                //let new_pos = (universe.p2_pos + m) % 10;
-                //let new_score = universe.p2_points + new_pos + 1;
-
-                //if new_score >= 21 {
-                    //*wins.entry(1).or_insert(0) += current_count;
-                //} else {
-                    //let next =
-                        //Universe::new(universe.p1_pos, universe.p1_points, new_pos, new_score, 0);
-                    //*universum.entry(next).or_insert(0) += i;
-                    //to_check.insert(next.clone());
-                //}
-            //}
-        //}
-    //}
     println!("{:?}", wins);
 
     Some(0)
