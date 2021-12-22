@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, BTreeSet};
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
@@ -70,11 +70,33 @@ impl std::str::FromStr for Cuboid {
 
         let init = x.0 >= -50 && x.1 <= 50 && y.0 >= -50 && y.1 <= 50 && z.0 >= -50 && z.1 <= 50;
 
-        Ok(Self { p1, p2, state, init })
+        Ok(Self {
+            p1,
+            p2,
+            state,
+            init,
+        })
     }
 }
 
 impl Cuboid {
+    fn new(p1: (i64, i64, i64), p2: (i64, i64, i64)) -> Self {
+        Cuboid {
+            p1: Point3d {
+                x: p1.0,
+                y: p1.1,
+                z: p1.2,
+            },
+            p2: Point3d {
+                x: p2.0,
+                y: p2.1,
+                z: p2.2,
+            },
+            state: true,
+            init: false,
+        }
+    }
+
     pub fn iter_points(&self) -> impl Iterator<Item = Point3d> + '_ {
         (self.p1.x..=self.p2.x).flat_map(move |x| {
             (self.p1.y..=self.p2.y)
@@ -82,10 +104,121 @@ impl Cuboid {
         })
     }
 
-    pub fn contains(&self, other: &Self) -> bool{
-        other.p1.x >= self.p1.x && other.p1.x <= self.p2.x
-        && other.p1.y >= self.p1.y && other.p1.y <= self.p2.y
-        && other.p1.z >= self.p1.z && other.p1.z <= self.p2.z
+    pub fn intersects(&self, other: &Self) -> bool {
+        //self = new point,
+        //other = existing point
+    }
+
+    pub fn get_cubes(&self, other: &Self) -> Option<Vec<Cuboid>> {
+        // do x
+        let res = vec![];
+        let new_x = match get_new_points((self.p1.x, self.p2.x), (other.p1.x, other.p1.x)) {
+            (Some(p1), None, Some(rest)) => {
+                res.push(Cuboid::new(
+                    (p1.0, other.p1.y, other.p1.z),
+                    (p1.1, other.p2.y, other.p2.z),
+                ));
+                rest
+            }
+            (Some(p1), Some(p2), Some(rest)) => {
+                res.push(Cuboid::new(
+                    (p1.0, other.p1.y, other.p1.z),
+                    (p1.1, other.p2.y, other.p2.z),
+                ));
+                res.push(Cuboid::new(
+                    (p2.0, other.p1.y, other.p1.z),
+                    (p2.1, other.p2.y, other.p2.z),
+                ));
+                rest
+            }
+            (None, None, Some(rest)) => rest,
+            (None, None, None) => return None,
+        };
+        let new_y = match get_new_points((self.p1.y, self.p2.y), (other.p1.y, other.p1.y)) {
+            (Some(p1), None, Some(rest)) => {
+                res.push(Cuboid::new(
+                    (new_x.0, p1.0, other.p1.z),
+                    (new_x.1, p1.1, other.p2.z),
+                ));
+                rest
+            }
+            (Some(p1), Some(p2), Some(rest)) => {
+                res.push(Cuboid::new(
+                    (new_x.0, p1.0, other.p1.z),
+                    (new_x.1, p1.1, other.p2.z),
+                ));
+                res.push(Cuboid::new(
+                    (new_x.0, p2.0, other.p1.z),
+                    (new_x.1, p2.1, other.p2.z),
+                ));
+                rest
+            }
+            (None, None, Some(rest)) => rest,
+            (None, None, None) => return None,
+        };
+        let new_z = match get_new_points((self.p1.z, self.p2.z), (other.p1.z, other.p1.z)) {
+            (Some(p1), None, Some(rest)) => {
+                res.push(Cuboid::new(
+                    (new_x.0, new_y.0, p1.0),
+                    (new_x.1, new_y.1, p1.1),
+                ));
+                rest
+            }
+            (Some(p1), Some(p2), Some(rest)) => {
+                res.push(Cuboid::new(
+                    (new_x.0, new_y.0, p1.0),
+                    (new_x.1, new_y.1, p1.1),
+                ));
+                res.push(Cuboid::new(
+                    (new_x.0, new_y.0, p1.0),
+                    (new_x.1, new_y.1, p1.1),
+                ));
+                rest
+            }
+            (None, None, Some(rest)) => rest,
+            (None, None, None) => return None,
+        };
+        // we don't need to use new_z
+
+        Some(res)
+    }
+}
+
+//if any point is inside the new cuboid (represented by [ ]), we are intersecting e.g.
+//  -[--{-]-}--  left point is inside, then cube = (new right, right)
+//  -{--[-}-]--  right point is inside, then cube = (left, new left)
+//  -[--{-}-]--  both points are inside (covered by the above) then cube = None;
+//or the existing point is outside the bounds of the new point (e.g. existing point
+//encompases new point
+//  -{--[-]-}-   over the extent, then cubes = (left, new left), (right, new right)
+
+// returns (new1, new2, cut)
+pub fn get_new_points(
+    new: (i64, i64),
+    existing: (i64, i64),
+) -> (Option<(i64, i64)>, Option<(i64, i64)>, Option<(i64, i64)>) {
+    if new.0 < existing.0 && new.1 < existing.1 && new.1 > existing.0 {
+        // our x covers their left x
+        // we're cutting the left off their cube (maybe)
+        (Some((new.1, existing.1)), None, Some((existing.0, new.1)))
+    } else if new.0 > existing.0 && new.0 < existing.1 && new.1 > existing.1 {
+        // our x covers their right X
+        // we are cutting off their right side
+        (Some((existing.0, new.0)), None, Some((new.0, existing.1)))
+    } else if new.0 < existing.0 && new.1 > existing.1 {
+        //our x covers their X
+        // we could be nuking their cube since we're covering it
+        (None, None, Some((existing.0, existing.1)))
+    } else if new.0 > existing.0 && new.1 < existing.1 {
+        //our x is inside their X
+        // we're going to split their x into two
+        (
+            Some((existing.0, new.0)),
+            Some((new.1, existing.1)),
+            Some((new.0, new.1)),
+        )
+    } else {
+        (None, None, None)
     }
 }
 
@@ -102,7 +235,9 @@ fn p01(p: &Path) -> Option<usize> {
     let mut chart = HashSet::new();
 
     for c in cuboids.iter() {
-        if !c.init { continue }
+        if !c.init {
+            continue;
+        }
         for p in c.iter_points() {
             match c.state {
                 true => chart.insert(p),
@@ -122,7 +257,6 @@ fn p02(p: &Path) -> Option<usize> {
         .filter(|x| !x.is_empty())
         .map(|x| x.parse::<Cuboid>().unwrap())
         .collect::<Vec<Cuboid>>();
-
 
     // What we know, the number of on/off bits is (x.1 - x.0) * (y.1 - y.0) * (z.1 -z.0)
     // if an existing cube is contained entirely inside a new cube, then we can kill the existing
