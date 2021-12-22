@@ -9,14 +9,14 @@ pub fn run() {
     println!("Part 2: {}", p02(path).unwrap());
 }
 
-#[derive(Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Hash, Eq, PartialEq, Ord, PartialOrd, Clone, Copy)]
 struct Point3d {
     x: i64,
     y: i64,
     z: i64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Cuboid {
     p1: Point3d,
     p2: Point3d,
@@ -104,15 +104,10 @@ impl Cuboid {
         })
     }
 
-    //pub fn intersects(&self, other: &Self) -> bool {
-        ////self = new point,
-        ////other = existing point
-    //}
-
     pub fn get_cubes(&self, other: &Self) -> Option<Vec<Cuboid>> {
         // do x
         let mut res = vec![];
-        let new_x = match get_new_points((self.p1.x, self.p2.x), (other.p1.x, other.p1.x)) {
+        let new_x = match get_new_points((self.p1.x, self.p2.x), (other.p1.x, other.p2.x)) {
             (Some(p1), None, Some(rest)) => {
                 res.push(Cuboid::new(
                     (p1.0, other.p1.y, other.p1.z),
@@ -135,7 +130,7 @@ impl Cuboid {
             (None, None, None) => return None,
             _ => unreachable!(),
         };
-        let new_y = match get_new_points((self.p1.y, self.p2.y), (other.p1.y, other.p1.y)) {
+        let new_y = match get_new_points((self.p1.y, self.p2.y), (other.p1.y, other.p2.y)) {
             (Some(p1), None, Some(rest)) => {
                 res.push(Cuboid::new(
                     (new_x.0, p1.0, other.p1.z),
@@ -158,7 +153,7 @@ impl Cuboid {
             (None, None, None) => return None,
             _ => unreachable!(),
         };
-        match get_new_points((self.p1.z, self.p2.z), (other.p1.z, other.p1.z)) {
+        match get_new_points((self.p1.z, self.p2.z), (other.p1.z, other.p2.z)) {
             (Some(p1), None, Some(rest)) => {
                 res.push(Cuboid::new(
                     (new_x.0, new_y.0, p1.0),
@@ -185,6 +180,10 @@ impl Cuboid {
 
         Some(res)
     }
+
+    pub fn size(&self) -> i64 {
+        (self.p2.x - self.p1.x + 1) * (self.p2.y - self.p1.y + 1) * (self.p2.z - self.p1.z + 1)
+    }
 }
 
 //if any point is inside the new cuboid (represented by [ ]), we are intersecting e.g.
@@ -200,24 +199,24 @@ pub fn get_new_points(
     new: (i64, i64),
     existing: (i64, i64),
 ) -> (Option<(i64, i64)>, Option<(i64, i64)>, Option<(i64, i64)>) {
-    if new.0 < existing.0 && new.1 < existing.1 && new.1 > existing.0 {
-        // our x covers their left x
-        // we're cutting the left off their cube (maybe)
-        (Some((new.1, existing.1)), None, Some((existing.0, new.1)))
-    } else if new.0 > existing.0 && new.0 < existing.1 && new.1 > existing.1 {
-        // our x covers their right X
-        // we are cutting off their right side
-        (Some((existing.0, new.0)), None, Some((new.0, existing.1)))
-    } else if new.0 < existing.0 && new.1 > existing.1 {
-        //our x covers their X
-        // we could be nuking their cube since we're covering it
+    if new.0 <= existing.0 && new.1 <= existing.1 && new.1 >= existing.0 {
+        (
+            Some((new.1 + 1, existing.1)),
+            None,
+            Some((existing.0, new.1)),
+        )
+    } else if new.0 >= existing.0 && new.0 <= existing.1 && new.1 >= existing.1 {
+        (
+            Some((existing.0, new.0 - 1)),
+            None,
+            Some((new.0, existing.1)),
+        )
+    } else if new.0 <= existing.0 && new.1 >= existing.1 {
         (None, None, Some((existing.0, existing.1)))
     } else if new.0 > existing.0 && new.1 < existing.1 {
-        //our x is inside their X
-        // we're going to split their x into two
         (
-            Some((existing.0, new.0)),
-            Some((new.1, existing.1)),
+            Some((existing.0, new.0 - 1)),
+            Some((new.1 + 1, existing.1)),
             Some((new.0, new.1)),
         )
     } else {
@@ -252,7 +251,7 @@ fn p01(p: &Path) -> Option<usize> {
     Some(chart.len())
 }
 
-fn p02(p: &Path) -> Option<usize> {
+fn p02(p: &Path) -> Option<i64> {
     let raw_input = fs::read_to_string(p).ok()?;
 
     let cuboids = raw_input
@@ -261,21 +260,27 @@ fn p02(p: &Path) -> Option<usize> {
         .map(|x| x.parse::<Cuboid>().unwrap())
         .collect::<Vec<Cuboid>>();
 
-    // What we know, the number of on/off bits is (x.1 - x.0) * (y.1 - y.0) * (z.1 -z.0)
-    // if an existing cube is contained entirely inside a new cube, then we can kill the existing
-    // The new cube is always taken in it's entirety
-    //   - We can drop off cubes, after we cut the existing cubes
-    // If any existing cubes are in the way, we need to cut them
-    //   - new cube intersects a face of an existing cube, that cube is shrunk on that face
-    //   - new cube protrudes into the existing cube, existing cube is split
-    //   - the point of intersection determines the amount of new cubes
-    //   - At most, the existing cube would be split into 26 cubes (where the new cube fits
-    //     entirely into an existing cube
-    // In the end, we just go through all cubes and sum
-    //
-    // What we need:
-    //   - An contains and/or intersection function (so we know if we need to do anything)
-    //   - A splitting type function
+    let mut map = vec![];
 
-    Some(0)
+    for cube in cuboids {
+        let mut next: Vec<Cuboid> = vec![];
+        for existing in map.iter() {
+            match cube.get_cubes(&existing) {
+                Some(mut cubes) => next.append(&mut cubes),
+                None => {
+                    if existing.state {
+                        next.push(existing.clone());
+                    }
+                }
+            }
+        }
+        if cube.state {
+            next.push(cube);
+        }
+        map = next;
+    }
+
+    let total = map.iter().map(|x| x.size()).sum();
+
+    Some(total)
 }
