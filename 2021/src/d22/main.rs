@@ -104,14 +104,14 @@ impl Cuboid {
         })
     }
 
-    pub fn intersects(&self, other: &Self) -> bool {
-        //self = new point,
-        //other = existing point
-    }
+    //pub fn intersects(&self, other: &Self) -> bool {
+        ////self = new point,
+        ////other = existing point
+    //}
 
     pub fn get_cubes(&self, other: &Self) -> Option<Vec<Cuboid>> {
         // do x
-        let res = vec![];
+        let mut res = vec![];
         let new_x = match get_new_points((self.p1.x, self.p2.x), (other.p1.x, other.p1.x)) {
             (Some(p1), None, Some(rest)) => {
                 res.push(Cuboid::new(
@@ -133,6 +133,7 @@ impl Cuboid {
             }
             (None, None, Some(rest)) => rest,
             (None, None, None) => return None,
+            _ => unreachable!(),
         };
         let new_y = match get_new_points((self.p1.y, self.p2.y), (other.p1.y, other.p1.y)) {
             (Some(p1), None, Some(rest)) => {
@@ -155,8 +156,9 @@ impl Cuboid {
             }
             (None, None, Some(rest)) => rest,
             (None, None, None) => return None,
+            _ => unreachable!(),
         };
-        let new_z = match get_new_points((self.p1.z, self.p2.z), (other.p1.z, other.p1.z)) {
+        match get_new_points((self.p1.z, self.p2.z), (other.p1.z, other.p1.z)) {
             (Some(p1), None, Some(rest)) => {
                 res.push(Cuboid::new(
                     (new_x.0, new_y.0, p1.0),
@@ -170,13 +172,14 @@ impl Cuboid {
                     (new_x.1, new_y.1, p1.1),
                 ));
                 res.push(Cuboid::new(
-                    (new_x.0, new_y.0, p1.0),
-                    (new_x.1, new_y.1, p1.1),
+                    (new_x.0, new_y.0, p2.0),
+                    (new_x.1, new_y.1, p2.1),
                 ));
                 rest
             }
             (None, None, Some(rest)) => rest,
             (None, None, None) => return None,
+            _ => unreachable!(),
         };
         // we don't need to use new_z
 
