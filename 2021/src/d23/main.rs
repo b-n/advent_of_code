@@ -292,7 +292,7 @@ fn p02(input: &str) -> Option<usize> {
 
     let begin = NodePosition::new(&mut start, g.len());
     begin.print(bottom_size);
-    let end = NodePosition::new(&mut vec!['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D'], g.len());
+    let end = NodePosition::new(&mut vec!['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D'], g.len());
     
 
     let res = Some(dykastra(&g, &char_costs, bottom_size, &begin, &end));
