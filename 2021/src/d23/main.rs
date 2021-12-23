@@ -1,7 +1,7 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 pub fn run() {
-    println!("Part 1: {}", p01("BCDABCAD").unwrap());
+    //println!("Part 1: {}", p01("BCDABCAD").unwrap());
     println!("Part 2: {}", p02("BCDABCAD").unwrap());
 }
 
@@ -134,10 +134,13 @@ impl NodeState {
 
             let descending = pos > bottom_size;
 
-            for (n_pos, steps) in traverse_graph(pos, wants, descending, 0, pos, graph, &mut visited.clone(), bottom_size)?.iter() {
+            for (n_pos, steps) in traverse_graph(pos, descending, 0, pos, graph, &mut visited.clone(), bottom_size)?.iter() {
                 if n_pos != &pos {
                     if *n_pos < bottom_size {
-                        if n_pos % 4 == wants && *n_pos >= 4 && self.position.points[n_pos - 4] == ' ' {
+                        if *n_pos >= 4 && (self.position.points[n_pos - 4] == ' ' || self.position.points[n_pos - 4] != *c) {
+                            continue;
+                        }
+                        if *n_pos < 4 && n_pos % 4 != wants {
                             continue;
                         }
                     }
@@ -169,7 +172,6 @@ impl PartialOrd for NodeState {
 
 fn traverse_graph(
     start: usize,
-    wants: usize,
     descending: bool,
     steps: usize,
     pos: usize,
@@ -192,11 +194,9 @@ fn traverse_graph(
         let desc = descending || (pos >= bottom_size && *n_pos < bottom_size);
 
         if pos >= bottom_size && *n_pos < bottom_size {
-            if n_pos % 4 == wants {
-                res.extend(traverse_graph(start, wants, desc, steps + 1, *n_pos, graph, visited, bottom_size)?);
-            } 
+            res.extend(traverse_graph(start, desc, steps + 1, *n_pos, graph, visited, bottom_size)?);
         } else { 
-            res.extend(traverse_graph(start, wants, desc, steps + 1, *n_pos, graph, visited, bottom_size)?);
+            res.extend(traverse_graph(start, desc, steps + 1, *n_pos, graph, visited, bottom_size)?);
         }
     }
 
@@ -221,11 +221,9 @@ fn dykastra(
     let mut i = 0;
     while let Some(item) = search_items.pop() {
         if item.cost > 10000 {
+            println!("{}", item.cost);
             item.position.print(bottom_size);
         }
-        //if i % 10000 == 0 {
-            //println!("{} {}", i, search_items.len());
-        //}
 
         if &item.position == end {
             return Some(item.cost);
@@ -297,8 +295,8 @@ fn p02(input: &str) -> Option<usize> {
     let end = NodePosition::new(&mut vec!['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D'], g.len());
     
 
-    //let res = Some(dykastra(&g, &char_costs, bottom_size, &begin, &end));
-    //println!("{:?}", res);
+    let res = Some(dykastra(&g, &char_costs, bottom_size, &begin, &end));
+    println!("{:?}", res);
 
     Some(0)
 }
