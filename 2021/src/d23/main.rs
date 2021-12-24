@@ -85,6 +85,7 @@ impl NodePosition {
     }
 
     fn print(&self, bottom_size: usize) {
+        println!("#############");
         print!("#");
         for i in bottom_size..bottom_size+11 {
             print!("{}", self.points[i]);
@@ -94,6 +95,7 @@ impl NodePosition {
         for i in (0..bottom_size/4).rev() {
             println!("  #{}#{}#{}#{}#",self.points[i * 4 + 0],self.points[i * 4 + 1],self.points[i * 4 + 2],self.points[i * 4 + 3]);
         }
+        println!("  #########\n");
     }
 }
 
@@ -159,9 +161,15 @@ impl NodeState {
                         if n_pos % 4 != wants {
                             continue;
                         }
-                        if *n_pos >= 4 && (self.position.points[n_pos - 4] == ' ') {
-                            continue;
+                        let mut all_same = true;
+                        for i in 0..3 {
+                            let c2 = self.position.points[i * 4 + wants];
+                            all_same &= c2 ==*c || c2 == ' ';
                         }
+                        if !all_same { continue; }
+                        //if *n_pos >= 4 && (self.position.points[n_pos - 4] == ' ') {
+                            //continue;
+                        //}
                     }
                     let mut next = self.position.points.clone();
                     next[*n_pos] = *c;
@@ -222,6 +230,7 @@ fn dykastra(
     end: &NodePosition,
 ) -> Option<usize> {
     let mut position_costs: HashMap<NodePosition, usize> = HashMap::new();
+    let mut connections: HashMap<NodePosition, NodePosition> = HashMap::new();
 
     let mut search_items: BinaryHeap<NodeState> = BinaryHeap::new();
     search_items.push(NodeState {
@@ -233,15 +242,18 @@ fn dykastra(
     while let Some(item) = search_items.pop() {
         if i % 10000 == 0 {
             println!("{} {}", i, search_items.len());
-            item.position.print(bottom_size);
+            //item.position.print(bottom_size);
         }
 
         if &item.position == end {
+            item.position.print(bottom_size);
+            print_path(&connections, &item.position, bottom_size, start);
             return Some(item.cost);
         }
 
         for (position, cost) in item.next(graph, char_costs, bottom_size)? {
             if !position_costs.contains_key(&position) || &cost < position_costs.get(&position)? {
+                connections.insert(position.clone(), item.position.clone());
                 position_costs.insert(position.clone(), cost);
                 search_items.push(NodeState { position, cost })
             }
@@ -251,6 +263,20 @@ fn dykastra(
     }
 
     None
+}
+
+fn print_path(history: &HashMap<NodePosition, NodePosition>, item: &NodePosition, bottom_size: usize, start: &NodePosition) {
+    let mut i = 0;
+    let mut next = item;
+    while let Some(prev) = history.get(&next) {
+        println!("Permutation {}", i);
+        prev.print(bottom_size);
+        if prev == start {
+            break;
+        }
+        next = prev;
+        i += 1;
+    }
 }
 
 fn p01(input: &str) -> Option<usize> {
