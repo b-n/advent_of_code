@@ -52,7 +52,7 @@ fn graph2() -> HashMap<usize, Node> {
     res.insert(12, Node { to: vec![8,18], allows_stopping: true });
     res.insert(13, Node { to: vec![9,20], allows_stopping: true });
     res.insert(14, Node { to: vec![10,22], allows_stopping: true });
-    res.insert(15, Node { to: vec![11,23], allows_stopping: true });
+    res.insert(15, Node { to: vec![11,24], allows_stopping: true });
     res.insert(16, Node { to: vec![17], allows_stopping: true });
     res.insert(17, Node { to: vec![16,18], allows_stopping: true });
     res.insert(18, Node { to: vec![12,17,19], allows_stopping: false });
@@ -228,8 +228,8 @@ fn dykastra(
     start: &NodePosition,
     end: &NodePosition,
 ) -> Option<usize> {
-    let mut position_costs: HashMap<NodePosition, usize> = HashMap::new();
-    let mut connections: HashMap<NodePosition, NodePosition> = HashMap::new();
+    let mut position_costs: HashMap<NodePosition, (usize, NodePosition)> = HashMap::new();
+    //let mut connections: HashMap<NodePosition, NodePosition> = HashMap::new();
 
     let mut search_items: BinaryHeap<NodeState> = BinaryHeap::new();
     search_items.push(NodeState {
@@ -246,14 +246,13 @@ fn dykastra(
 
         if &item.position == end {
             item.position.print(bottom_size);
-            print_path(&connections, &item.position, bottom_size, start);
+            print_path(&position_costs, &item.position, bottom_size, start);
             return Some(item.cost);
         }
 
         for (position, cost) in item.next(graph, char_costs, bottom_size)? {
-            if !position_costs.contains_key(&position) || &cost < position_costs.get(&position)? {
-                connections.insert(position.clone(), item.position.clone());
-                position_costs.insert(position.clone(), cost);
+            if !position_costs.contains_key(&position) || cost < position_costs.get(&position)?.0 {
+                position_costs.insert(position.clone(), (cost, item.position.clone()));
                 search_items.push(NodeState { position, cost })
             }
         }
@@ -264,18 +263,22 @@ fn dykastra(
     None
 }
 
-fn print_path(history: &HashMap<NodePosition, NodePosition>, item: &NodePosition, bottom_size: usize, start: &NodePosition) {
+fn print_path(history: &HashMap<NodePosition, (usize, NodePosition)>, item: &NodePosition, bottom_size: usize, start: &NodePosition) {
     let mut i = 0;
     let mut next = item;
     while let Some(prev) = history.get(&next) {
-        println!("Permutation {}", i);
-        prev.print(bottom_size);
-        if prev == start {
+        println!("Permutation {} - Cost {}", i, prev.0);
+        next.print(bottom_size);
+        //prev.1.print(bottom_size);
+        if &prev.1 == start {
             break;
         }
-        next = prev;
+        next = &prev.1;
         i += 1;
     }
+
+    println!("Permutation {} - Cost {}", i + 1, 0);
+    start.print(bottom_size);
 }
 
 fn p01(input: &str) -> Option<usize> {
