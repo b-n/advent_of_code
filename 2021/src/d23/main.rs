@@ -138,13 +138,12 @@ impl NodeState {
             };
 
             if pos < bottom_size && pos % 4 == wants {
+                // let's not modify "done" columns
                 let mut completed = true;
                 for i in 0..4 {
-                    completed &= self.position.points[i + wants] == *c;
+                    completed &= self.position.points[i * 4 + wants] == *c;
                 }
                 if completed {
-                    println!("COMPLETED!");
-                    self.position.print(bottom_size);
                     continue;
                 }
             }
@@ -241,7 +240,7 @@ fn dykastra(
     let mut i = 0;
     while let Some(item) = search_items.pop() {
         if i % 10000 == 0 {
-            println!("{} {}", i, search_items.len());
+            //println!("{} {}", i, search_items.len());
             //item.position.print(bottom_size);
         }
 
