@@ -3,13 +3,13 @@ use std::path::Path;
 use std::collections::HashMap;
 
 pub fn run() {
-    let path = Path::new("./input/24_example");
+    let path = Path::new("./input/24");
 
     println!("Part 1: {}", p01(&path).unwrap());
     //println!("Part 2: {}", p02("BCDABCAD").unwrap());
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 enum Op {
     Inp,
     Add,
@@ -33,9 +33,11 @@ fn rhs(instruction: &Instruction, heap: &Heap) -> Option<i64> {
 
 type InstructionError = ();
 fn process(instruction: &Instruction, heap: &mut Heap) -> Option<InstructionError> {
+    println!("{:?}", instruction);
     let (op, var, _, _) = instruction;
     let r = rhs(instruction, heap)?;
     let l = heap.entry(*var).or_insert(0);
+
     match op {
         Op::Add => *l += r,
         Op::Mul => *l *= r,
@@ -63,22 +65,50 @@ fn process(instruction: &Instruction, heap: &mut Heap) -> Option<InstructionErro
 fn p01(p: &Path) -> Option<usize> {
     let raw_input = fs::read_to_string(p).ok()?;
     let stack = generate_stack(&raw_input)?;
-    let mut heap: Heap = HashMap::new();
+    let mut stacks = vec![];
+    let mut next_stack = vec![];
+    for i in stack.iter() {
+        if i.0 == Op::Inp {
+            if next_stack.len() > 0 {
+                stacks.push(next_stack);
+            }
+            next_stack = vec![];
+        }
+        next_stack.push(i.clone());
+    }
+    stacks.push(next_stack);
 
-    let input = 2;
-    for i in stack {
-        match i.0 {
-            Op::Inp => {
-                heap.insert(i.1, input);
-            },
-            _ => {
-                process(&i, &mut heap);
+    for stack in stacks {
+        println!("{:?}", stack);
+        'int: for i in (1..=9).rev() {
+            let mut heap: Heap = HashMap::new();
+            for ins in stack.iter() {
+                let res = match ins.0 {
+                    Op::Inp => {
+                        heap.insert(ins.1, i);
+                        None
+                    },
+                    _ => {
+                        process(&ins, &mut heap)
+                    }
+                };
+                // None = no error
+                // if we get anything, we break for this i
+                match res {
+                    Some(_) => {
+                        println!("error on {}", i);
+                        continue 'int;
+                    }
+                    None => (),
+                }
+            }
+            println!("{} {}", i, heap.get(&'z')?);
+            if heap.get(&'z')? == &0 {
+                println!("{}", i);
+                break;
             }
         }
-        println!("{:?}", heap);
     }
-
-    println!("{:?}", heap);
     Some(0)
 }
 
