@@ -21,6 +21,7 @@ mod d20;
 mod d21;
 mod d22;
 mod d23;
+mod d24;
 mod utils;
 mod types;
 
@@ -48,5 +49,6 @@ fn main() {
     //d20::speed::run();
     //d21::main::run();
     //d22::main::run();
-    d23::main::run();
+    //d23::main::run();
+    d24::main::run();
 }
