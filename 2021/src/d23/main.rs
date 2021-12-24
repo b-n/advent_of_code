@@ -1,7 +1,7 @@
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 pub fn run() {
-    //println!("Part 1: {}", p01("BCDABCAD").unwrap());
+    println!("Part 1: {}", p01("BCDABCAD").unwrap());
     println!("Part 2: {}", p02("BCDABCAD").unwrap());
 }
 
@@ -239,14 +239,9 @@ fn dykastra(
 
     let mut i = 0;
     while let Some(item) = search_items.pop() {
-        if i % 10000 == 0 {
-            //println!("{} {}", i, search_items.len());
-            //item.position.print(bottom_size);
-        }
-
         if &item.position == end {
-            item.position.print(bottom_size);
-            print_path(&position_costs, &item.position, bottom_size, start);
+            //item.position.print(bottom_size);
+            //print_path(&position_costs, &item.position, bottom_size, start);
             return Some(item.cost);
         }
 
@@ -269,7 +264,6 @@ fn print_path(history: &HashMap<NodePosition, (usize, NodePosition)>, item: &Nod
     while let Some(prev) = history.get(&next) {
         println!("Permutation {} - Cost {}", i, prev.0);
         next.print(bottom_size);
-        //prev.1.print(bottom_size);
         if &prev.1 == start {
             break;
         }
@@ -315,9 +309,9 @@ fn p02(input: &str) -> Option<usize> {
     let bottom_size = start.len();
 
     let begin = NodePosition::new(&mut start, g.len());
-    begin.print(bottom_size);
+    //begin.print(bottom_size);
     let end = NodePosition::new(&mut vec!['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B', 'C', 'D'], g.len());
-    end.print(bottom_size);
+    //end.print(bottom_size);
     
     let res = dykastra(&g, &char_costs, bottom_size, &begin, &end);
     res
