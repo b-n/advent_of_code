@@ -51,6 +51,7 @@ fn main() {
     //d21::main::run();
     //d22::main::run();
     //d23::main::run();
+    d23::talk::run();
     //d24::main::run();
-    d25::main::run();
+    //d25::main::run();
 }
